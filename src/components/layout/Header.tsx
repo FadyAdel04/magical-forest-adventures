@@ -11,9 +11,9 @@ const links = [
 type ActiveHref = (typeof links)[number]["href"];
 type HeaderTheme = "forest" | "paper" | "order";
 
-function themeFromActive(active: ActiveHref): HeaderTheme {
-  if (active === "#product") return "paper";
+function resolveHeaderTheme(active: ActiveHref, paperFromScroll: boolean): HeaderTheme {
   if (active === "#order") return "order";
+  if (active === "#product" || paperFromScroll) return "paper";
   return "forest";
 }
 
@@ -39,6 +39,7 @@ function navLinkClass(isActive: boolean, theme: HeaderTheme, variant: "bar" | "m
 export function Header() {
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState<ActiveHref>("#home");
+  const [paperFromScroll, setPaperFromScroll] = useState(false);
 
   const updateActiveSection = useCallback(() => {
     const home = document.getElementById("home");
@@ -49,15 +50,22 @@ export function Header() {
     const headerOffset = 88;
     const marker = window.scrollY + headerOffset;
 
+    const homeMid = home.offsetTop + home.offsetHeight / 2;
     const productTop = product.offsetTop;
     const orderTop = order.offsetTop;
 
     if (marker >= orderTop) {
       setActive("#order");
+      setPaperFromScroll(false);
     } else if (marker >= productTop) {
       setActive("#product");
+      setPaperFromScroll(true);
+    } else if (marker >= homeMid) {
+      setActive("#home");
+      setPaperFromScroll(true);
     } else {
       setActive("#home");
+      setPaperFromScroll(false);
     }
   }, []);
 
@@ -79,7 +87,7 @@ export function Header() {
     document.querySelector(href)?.scrollIntoView({ behavior: "smooth" });
   };
 
-  const theme = themeFromActive(active);
+  const theme = resolveHeaderTheme(active, paperFromScroll);
 
   const headerShellClass =
     theme === "paper"

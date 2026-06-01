@@ -5,14 +5,12 @@ import {
   Minus,
   Plus,
   Sparkles,
-  MessageCircle,
   ShoppingBag,
   ChevronDown,
   X,
   Truck,
 } from "lucide-react";
 import { explorerCharacter } from "@/assets/characters";
-import productBox from "@/assets/product5.jpg";
 import { BlinkingExplorer } from "@/components/shared/BlinkingExplorer";
 import { ForestCharacter } from "@/components/shared/ForestCharacter";
 import { Fireflies } from "./Fireflies";
@@ -24,23 +22,40 @@ import { formatNumber, formatPrice } from "@/lib/format";
 import { formatShippingFee, resolveShippingFee } from "@/lib/shipping";
 import { EnNum } from "@/components/shared/EnNum";
 import { resolveSlideImage } from "@/lib/imageAssets";
+import { buildOrderWhatsAppMessage, buildWhatsAppUrl, WHATSAPP_NUMBER_DISPLAY } from "@/lib/contact";
+import { WhatsAppIcon } from "@/components/icons/SocialIcons";
+import {
+  validateOrderForm,
+  type OrderFormErrors,
+  type OrderFormField,
+} from "@/lib/order-form-validation";
+import { formatPhoneInput } from "@/lib/phone-validation";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 
 const governorates = [...GOVERNORATES];
 
 // Searchable Select Component
 function SearchableSelect({
+  id,
   value,
   onChange,
   options,
   placeholder,
   required,
+  hasError,
+  describedBy,
+  onBlur,
 }: {
+  id: string;
   value: string;
   onChange: (val: string) => void;
   options: string[];
   placeholder: string;
   required?: boolean;
+  hasError?: boolean;
+  describedBy?: string;
+  onBlur?: () => void;
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
@@ -127,6 +142,7 @@ function SearchableSelect({
       <div className="relative">
         <div className="relative">
           <input
+            id={id}
             ref={inputRef}
             type="text"
             value={isOpen ? searchTerm : displayValue}
@@ -143,10 +159,20 @@ function SearchableSelect({
               setIsOpen(true);
               setSearchTerm("");
             }}
+            onBlur={() => {
+              window.setTimeout(() => {
+                if (!dropdownRef.current?.contains(document.activeElement)) {
+                  onBlur?.();
+                }
+              }, 150);
+            }}
             onKeyDown={handleKeyDown}
             placeholder={placeholder}
             required={required && !value}
-            className="w-full rounded-lg border border-forest/20 bg-white px-3 py-2 pr-8 text-sm text-forest-deep outline-none transition placeholder:text-forest-deep/40 focus:border-forest focus:ring-2 focus:ring-forest/20"
+            aria-invalid={hasError || undefined}
+            aria-describedby={describedBy}
+            autoComplete="address-level1"
+            className={cn(inputCls, hasError && inputErrorCls)}
           />
           {displayValue && !isOpen ? (
             <button
@@ -208,6 +234,7 @@ export function Order() {
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [orderNumber, setOrderNumber] = useState("");
+  const [submittedPhone, setSubmittedPhone] = useState("");
   const [form, setForm] = useState({
     name: "",
     phone: "",
@@ -215,6 +242,27 @@ export function Order() {
     address: "",
     notes: "",
   });
+  const [fieldErrors, setFieldErrors] = useState<OrderFormErrors>({});
+  const [touched, setTouched] = useState<Partial<Record<OrderFormField, boolean>>>({});
+
+  const clearFieldError = (field: OrderFormField) => {
+    setFieldErrors((prev) => {
+      if (!prev[field]) return prev;
+      const next = { ...prev };
+      delete next[field];
+      return next;
+    });
+  };
+
+  const touchField = (field: OrderFormField) => {
+    setTouched((prev) => ({ ...prev, [field]: true }));
+    const { errors } = validateOrderForm(form);
+    if (errors[field]) {
+      setFieldErrors((prev) => ({ ...prev, [field]: errors[field] }));
+    } else {
+      clearFieldError(field);
+    }
+  };
 
   const unitPrice = catalog.priceAfter;
   const shippingFee = useMemo(
@@ -227,26 +275,46 @@ export function Order() {
   const discount = showOffer
     ? calcDiscountPercent(catalog.priceBefore, catalog.priceAfter)
     : 0;
-  const productImage =
-    catalog.slides[0]?.imageUrl != null
-      ? resolveSlideImage(catalog.slides[0].imageUrl)
-      : productBox;
 
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
     if (!isReady || submitting) return;
+
+    const { errors, normalizedPhone } = validateOrderForm(form);
+    if (Object.keys(errors).length > 0 || !normalizedPhone) {
+      setFieldErrors(errors);
+      setTouched({
+        name: true,
+        phone: true,
+        gov: true,
+        address: true,
+        notes: true,
+      });
+      toast.error("يرجى تصحيح البيانات قبل إرسال الطلب");
+      const firstKey = (Object.keys(errors)[0] ?? "phone") as OrderFormField;
+      document.getElementById(`order-${firstKey}`)?.focus();
+      return;
+    }
+
+    if (!form.gov) {
+      toast.error("اختر المحافظة لحساب الشحن");
+      return;
+    }
+
     setSubmitting(true);
     try {
       const order = await createOrder({
         customerName: form.name.trim(),
-        phone: form.phone.trim(),
+        phone: normalizedPhone,
         governorate: form.gov,
         address: form.address.trim(),
         notes: form.notes.trim(),
         quantity: qty,
       });
       setOrderNumber(order.orderNumber);
+      setSubmittedPhone(normalizedPhone);
       setSubmitted(true);
+      setFieldErrors({});
       toast.success("تم استلام طلبك بنجاح");
     } catch {
       toast.error("تعذّر إرسال الطلب. حاول مرة أخرى.");
@@ -255,9 +323,37 @@ export function Order() {
     }
   };
 
-  const whatsappMsg = encodeURIComponent(
-    `مرحباً! أود طلب مغامرات نسيج في الغابة السحرية\nرقم الطلب: ${orderNumber}\nالكمية: ${qty}\nالمجموع: ${subtotal} ج\nالشحن: ${shippingFee} ج\nالإجمالي: ${total} ج\nالاسم: ${form.name}\nالهاتف: ${form.phone}\nالمحافظة: ${form.gov}\nالعنوان: ${form.address}\nملاحظات: ${form.notes}`,
-  );
+  const whatsappHref = useMemo(() => {
+    if (!submitted || !orderNumber) return null;
+    const message = buildOrderWhatsAppMessage({
+      orderNumber,
+      quantity: qty,
+      subtotal,
+      shippingFee,
+      total,
+      name: form.name.trim(),
+      phone: submittedPhone || form.phone.trim(),
+      governorate: form.gov,
+      address: form.address.trim(),
+      notes: form.notes.trim(),
+      currency: catalog.currency,
+    });
+    return buildWhatsAppUrl(message);
+  }, [
+    submitted,
+    orderNumber,
+    qty,
+    subtotal,
+    shippingFee,
+    total,
+    form.name,
+    submittedPhone,
+    form.phone,
+    form.gov,
+    form.address,
+    form.notes,
+    catalog.currency,
+  ]);
 
   return (
     <section
@@ -285,7 +381,7 @@ export function Order() {
         />
       </motion.div>
 
-      {/* Mobile explorer — bottom corner only, not inside the form */}
+      {/* Mobile explorer — bottom corner only */}
       <motion.div
         initial={{ opacity: 0, y: 16 }}
         whileInView={{ opacity: 1, y: 0 }}
@@ -302,12 +398,12 @@ export function Order() {
         </motion.div>
       </motion.div>
 
-      <div className="container relative z-20 mx-auto px-4">
+      <div className="container relative z-20 mx-auto max-w-2xl px-4">
         <motion.div
           initial={{ opacity: 0, y: 15 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="mx-auto mb-5 max-w-2xl text-center sm:mb-6"
+          className="mx-auto mb-5 text-center sm:mb-6"
         >
           <span className="inline-flex items-center gap-2 rounded-full bg-gradient-gold px-2.5 py-0.5 text-xs font-bold text-forest-deep shadow-lg">
             <Sparkles className="h-3 w-3" />
@@ -321,39 +417,20 @@ export function Order() {
           </p>
         </motion.div>
 
-        <div className="mx-auto grid max-w-6xl items-start gap-5 lg:grid-cols-3 lg:gap-6">
-          {/* Product Card - takes 1/3 */}
-          <motion.div
-            initial={{ opacity: 0, x: 30 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true }}
-            className="relative rounded-2xl border border-white/35 bg-[oklch(0.2_0.05_150/0.72)] p-4 shadow-magic backdrop-blur-xl sm:p-5 lg:col-span-1"
-          >
-            <div className="relative">
-              <div className="absolute inset-0 bg-linear-to-t from-gold/40 to-transparent blur-3xl" />
-              <img
-                src={productImage}
-                alt="صندوق الغابة السحرية"
-                loading="lazy"
-                className="relative mx-auto w-full max-w-[160px] animate-float-y animate-shimmer sm:max-w-[180px]"
-              />
-            </div>
-
-            <ul className="mt-3 space-y-1.5 sm:mt-4">
-              {catalog.features.map((item) => (
-                <li key={item.id} className="flex items-center gap-2 text-[oklch(0.98_0.02_92)]">
-                  <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-gold shadow-sm">
-                    <Check className="h-3 w-3 text-forest-deep" strokeWidth={3} />
-                  </span>
-                  <span className="text-xs font-medium leading-snug sm:text-sm">{item.text}</span>
-                </li>
-              ))}
-            </ul>
-
-            <div className="mt-3 border-t border-white/30 pt-3 sm:mt-4 sm:pt-3">
+        {/* Form Card - Centered */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6 }}
+          className="overflow-hidden rounded-2xl border border-[oklch(0.9_0.03_90)] bg-[oklch(0.99_0.015_92)] p-4 shadow-magic sm:p-6"
+        >
+          {/* Price Summary Card */}
+          <div className="mb-4 rounded-xl bg-gradient-forest/10 p-3 sm:p-4">
+            <div className="flex flex-wrap items-center justify-between gap-2">
               <div>
                 {showOffer && (
-                  <p className="mb-1 text-xs text-cream/75 line-through">
+                  <p className="text-xs text-forest-deep/60 line-through">
                     <EnNum>{formatPrice(catalog.priceBefore)}</EnNum>
                     {discount > 0 && (
                       <>
@@ -363,30 +440,23 @@ export function Order() {
                     )}
                   </p>
                 )}
-                <p className="text-glow-gold font-display text-2xl font-black text-[oklch(0.9_0.16_85)] sm:text-3xl">
+                <p className="font-display text-2xl font-black text-forest-deep sm:text-3xl">
                   <EnNum>{formatPrice(unitPrice)}</EnNum>{" "}
-                  <span className="text-base font-bold text-cream/90 sm:text-lg">/ للصندوق</span>
+                  <span className="text-sm font-bold text-forest-deep/70">/ للصندوق</span>
                 </p>
               </div>
               {form.gov && (
-                <p className="mt-2 text-[11px] text-cream/80">
+                <p className="text-xs text-forest-deep/70">
                   شحن إلى {form.gov}:{" "}
-                  <span className="font-bold text-[oklch(0.9_0.16_85)]">
+                  <span className="font-bold text-forest-deep">
                     <EnNum>{formatShippingFee(shippingFee)}</EnNum>
                   </span>
                 </p>
               )}
             </div>
-          </motion.div>
+          </div>
 
-          {/* Form Card - takes 2/3 */}
-          <motion.div
-            initial={{ opacity: 0, x: -30 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true }}
-            className="relative overflow-hidden rounded-2xl border border-[oklch(0.9_0.03_90)] bg-[oklch(0.99_0.015_92)] p-4 shadow-magic sm:p-5 lg:col-span-2"
-          >
-            <div className="relative z-10">
+          <div className="relative z-10">
             {submitted ? (
               <div className="py-5 text-center sm:py-6">
                 <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-gradient-forest shadow-glow">
@@ -401,53 +471,106 @@ export function Order() {
                   </p>
                 )}
                 <p className="mt-1.5 text-xs text-muted-foreground sm:text-sm">
-                  سنتواصل معك خلال ساعات قليلة لتأكيد الطلب وتفاصيل التوصيل.
+                  أرسل تفاصيل طلبك على واتساب{" "}
+                  <span dir="ltr" className="inline font-semibold text-forest">
+                    <EnNum>{WHATSAPP_NUMBER_DISPLAY}</EnNum>
+                  </span>{" "}
+                  لتأكيد الطلب، أو انتظر اتصالنا خلال ساعات قليلة.
                 </p>
-                <a
-                  href={`https://wa.me/?text=${whatsappMsg}`}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="mt-3 inline-flex items-center gap-2 rounded-full bg-[oklch(0.65_0.18_145)] px-4 py-2 text-xs font-bold text-white transition hover:bg-[oklch(0.6_0.2_145)] sm:text-sm"
-                >
-                  <MessageCircle className="h-3.5 w-3.5" />
-                  متابعة عبر واتساب
-                </a>
+                {whatsappHref && (
+                  <a
+                    href={whatsappHref}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mt-4 inline-flex w-full max-w-sm items-center justify-center gap-2.5 rounded-full bg-[oklch(0.55_0.18_145)] px-5 py-3 text-sm font-bold text-white shadow-[0_8px_24px_oklch(0.45_0.14_145/0.35)] transition hover:scale-[1.02] hover:bg-[oklch(0.5_0.2_145)] sm:w-auto sm:px-6"
+                  >
+                    <WhatsAppIcon className="h-5 w-5 shrink-0" />
+                    إرسال الطلب على واتساب
+                  </a>
+                )}
               </div>
             ) : (
-              <form onSubmit={onSubmit} className="space-y-2.5">
+              <form onSubmit={onSubmit} noValidate className="space-y-3">
                 <h3 className="mb-0.5 font-display text-lg font-black text-forest-deep sm:text-xl">
                   معلومات الطلب
                 </h3>
+                <p className="text-xs text-muted-foreground">
+                  الحقول بعلامة <span className="text-red-600">*</span> مطلوبة
+                </p>
 
-                {/* Two-column grid for form fields */}
-                <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
-                  <Field label="الاسم بالكامل">
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  <Field
+                    label="الاسم بالكامل"
+                    htmlFor="order-name"
+                    required
+                    error={touched.name ? fieldErrors.name : undefined}
+                  >
                     <input
+                      id="order-name"
+                      name="name"
                       required
+                      autoComplete="name"
                       maxLength={80}
                       value={form.name}
-                      onChange={(e) => setForm({ ...form, name: e.target.value })}
-                      className={inputCls}
+                      onChange={(e) => {
+                        setForm({ ...form, name: e.target.value });
+                        clearFieldError("name");
+                      }}
+                      onBlur={() => touchField("name")}
+                      aria-invalid={!!fieldErrors.name}
+                      className={cn(inputCls, touched.name && fieldErrors.name && inputErrorCls)}
                     />
                   </Field>
-                  <Field label="رقم الهاتف">
+                  <Field
+                    label="رقم الهاتف (واتساب)"
+                    htmlFor="order-phone"
+                    required
+                    error={touched.phone ? fieldErrors.phone : undefined}
+                  >
                     <input
+                      id="order-phone"
+                      name="phone"
                       required
                       type="tel"
-                      maxLength={20}
-                      pattern="[0-9+\s]+"
+                      inputMode="numeric"
+                      autoComplete="tel"
+                      dir="ltr"
+                      maxLength={11}
                       value={form.phone}
-                      onChange={(e) => setForm({ ...form, phone: e.target.value })}
-                      className={inputCls}
+                      onChange={(e) => {
+                        setForm({ ...form, phone: formatPhoneInput(e.target.value) });
+                        clearFieldError("phone");
+                      }}
+                      onBlur={() => touchField("phone")}
+                      aria-invalid={!!fieldErrors.phone}
+                      className={cn(
+                        inputCls,
+                        "text-left",
+                        touched.phone && fieldErrors.phone && inputErrorCls,
+                      )}
                     />
                   </Field>
-                  <Field label="المحافظة">
+                  <Field
+                    label="المحافظة"
+                    htmlFor="order-gov"
+                    required
+                    error={touched.gov ? fieldErrors.gov : undefined}
+                  >
                     <SearchableSelect
+                      id="order-gov"
                       required
                       value={form.gov}
-                      onChange={(val) => setForm({ ...form, gov: val })}
+                      onChange={(val) => {
+                        setForm({ ...form, gov: val });
+                        clearFieldError("gov");
+                      }}
+                      onBlur={() => touchField("gov")}
                       options={governorates}
                       placeholder="ابحث أو اختر المحافظة"
+                      hasError={!!(touched.gov && fieldErrors.gov)}
+                      describedBy={
+                        touched.gov && fieldErrors.gov ? "order-gov-error" : undefined
+                      }
                     />
                   </Field>
                   <div className="sm:col-span-2">
@@ -495,24 +618,54 @@ export function Order() {
                       )}
                     </AnimatePresence>
                   </div>
-                  <Field label="العنوان">
+                  <Field
+                    label="العنوان بالتفصيل"
+                    htmlFor="order-address"
+                    required
+                    className="sm:col-span-2"
+                    error={touched.address ? fieldErrors.address : undefined}
+                  >
                     <input
+                      id="order-address"
+                      name="address"
                       required
+                      autoComplete="street-address"
                       maxLength={200}
+                      placeholder="الشارع، المبنى، الدور، علامة مميزة..."
                       value={form.address}
-                      onChange={(e) => setForm({ ...form, address: e.target.value })}
-                      className={inputCls}
+                      onChange={(e) => {
+                        setForm({ ...form, address: e.target.value });
+                        clearFieldError("address");
+                      }}
+                      onBlur={() => touchField("address")}
+                      aria-invalid={!!fieldErrors.address}
+                      className={cn(
+                        inputCls,
+                        touched.address && fieldErrors.address && inputErrorCls,
+                      )}
                     />
                   </Field>
                 </div>
 
-                <Field label="ملاحظات إضافية">
+                <Field
+                  label="ملاحظات إضافية (اختياري)"
+                  htmlFor="order-notes"
+                  error={touched.notes ? fieldErrors.notes : undefined}
+                >
                   <textarea
+                    id="order-notes"
+                    name="notes"
                     maxLength={500}
                     rows={2}
+                    placeholder="أي تعليمات للتوصيل..."
                     value={form.notes}
-                    onChange={(e) => setForm({ ...form, notes: e.target.value })}
-                    className={inputCls}
+                    onChange={(e) => {
+                      setForm({ ...form, notes: e.target.value });
+                      clearFieldError("notes");
+                    }}
+                    onBlur={() => touchField("notes")}
+                    aria-invalid={!!fieldErrors.notes}
+                    className={cn(inputCls, touched.notes && fieldErrors.notes && inputErrorCls)}
                   />
                 </Field>
 
@@ -577,10 +730,8 @@ export function Order() {
 
               </form>
             )}
-            </div>
-          </motion.div>
-        </div>
-
+          </div>
+        </motion.div>
       </div>
     </section>
   );
@@ -589,11 +740,41 @@ export function Order() {
 const inputCls =
   "w-full rounded-lg border border-forest/20 bg-white px-3 py-2 text-sm text-forest-deep outline-none transition placeholder:text-forest-deep/40 focus:border-forest focus:ring-2 focus:ring-forest/20";
 
-function Field({ label, children }: { label: string; children: ReactNode }) {
+const inputErrorCls = "border-red-500 focus:border-red-500 focus:ring-red-500/25";
+
+function Field({
+  label,
+  htmlFor,
+  required,
+  hint,
+  error,
+  className,
+  children,
+}: {
+  label: string;
+  htmlFor?: string;
+  required?: boolean;
+  hint?: string;
+  error?: string;
+  className?: string;
+  children: ReactNode;
+}) {
+  const errorId = htmlFor ? `${htmlFor}-error` : undefined;
   return (
-    <label className="block">
-      <span className="mb-0.5 block text-xs font-bold text-forest-deep">{label}</span>
+    <div className={className}>
+      <label htmlFor={htmlFor} className="mb-1 block text-xs font-bold text-forest-deep">
+        {label}
+        {required && <span className="ms-0.5 text-red-600">*</span>}
+      </label>
+      {hint && !error && (
+        <p className="mb-1 text-[11px] text-muted-foreground">{hint}</p>
+      )}
       {children}
-    </label>
+      {error && (
+        <p id={errorId} className="mt-1 text-xs font-medium text-red-600" role="alert">
+          {error}
+        </p>
+      )}
+    </div>
   );
 }
