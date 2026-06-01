@@ -95,6 +95,13 @@ export function Footer() {
             })}
           </div>
 
+          <a
+            href={telHref}
+            className="text-xs text-muted-foreground underline-offset-2 hover:text-forest hover:underline"
+            dir="ltr"
+          >
+            أو اتصل: <EnNum>{WHATSAPP_NUMBER_DISPLAY}</EnNum>
+          </a>
 
           <p className="text-xs text-muted-foreground">
             © <EnNum>{formatNumber(new Date().getFullYear())}</EnNum> نسيج — كل الحقوق محفوظة

@@ -21,7 +21,6 @@ import { orderLineTotal, calcDiscountPercent } from "@/lib/pricing";
 import { formatNumber, formatPrice } from "@/lib/format";
 import { formatShippingFee, resolveShippingFee } from "@/lib/shipping";
 import { EnNum } from "@/components/shared/EnNum";
-import { resolveSlideImage } from "@/lib/imageAssets";
 import { buildOrderWhatsAppMessage, buildWhatsAppUrl, WHATSAPP_NUMBER_DISPLAY } from "@/lib/contact";
 import { WhatsAppIcon } from "@/components/icons/SocialIcons";
 import {
