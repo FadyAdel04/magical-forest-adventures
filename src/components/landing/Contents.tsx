@@ -12,7 +12,7 @@ const items: Item[] = [
 
 export function Contents() {
   return (
-    <section className="relative py-24 sm:py-32 bg-[oklch(0.95_0.03_88)] overflow-hidden">
+    <section id="contents" className="relative py-24 sm:py-32 bg-[oklch(0.95_0.03_88)] overflow-hidden">
       <div className="absolute inset-0 opacity-30 bg-[radial-gradient(circle_at_20%_20%,oklch(0.7_0.13_140/0.3),transparent_50%),radial-gradient(circle_at_80%_80%,oklch(0.82_0.16_82/0.3),transparent_50%)]" />
 
       <div className="container mx-auto px-4 relative">
