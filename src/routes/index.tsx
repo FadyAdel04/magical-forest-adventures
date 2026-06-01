@@ -5,6 +5,7 @@ import { Contents } from "@/components/landing/Contents";
 import { Gallery } from "@/components/landing/Gallery";
 import { Order } from "@/components/landing/Order";
 import { FloatingLeaves } from "@/components/landing/Fireflies";
+import { Header } from "@/components/landing/Header";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -30,6 +31,7 @@ function Index() {
   return (
     <main className="relative bg-background text-foreground" dir="rtl">
       <FloatingLeaves count={6} />
+      <Header />
       <Hero />
       <Experience />
       <Contents />
