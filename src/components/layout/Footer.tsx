@@ -1,11 +1,6 @@
 import { Facebook, Instagram } from "lucide-react";
-import { EnNum } from "@/components/shared/EnNum";
 import { TikTokIcon, WhatsAppIcon } from "@/components/icons/SocialIcons";
-import {
-  buildWhatsAppUrl,
-  SOCIAL_LINKS,
-} from "@/lib/contact";
-import { formatNumber } from "@/lib/format";
+import { buildWhatsAppUrl, SOCIAL_LINKS } from "@/lib/contact";
 import { cn } from "@/lib/utils";
 
 const socialItems = [
