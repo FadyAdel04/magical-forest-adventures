@@ -240,7 +240,19 @@ export async function createOrder(input: CreateOrderInput): Promise<OrderRecord>
     cache = { ...cache, orders: [order, ...cache.orders] };
   }
   persistLocal();
-  return cache.orders[0]!;
+  const created = cache.orders[0]!;
+
+  // Send email alert in production (server-side via Vercel function).
+  // Never block order creation if email sending fails.
+  if (import.meta.env.PROD) {
+    void fetch("/api/order-alert", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ order: created }),
+    }).catch(() => {});
+  }
+
+  return created;
 }
 
 function nextOrderNumberLocal(): string {
