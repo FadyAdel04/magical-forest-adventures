@@ -126,7 +126,6 @@ export function SensoryFeatures({ compact = false }: { compact?: boolean }) {
                       index={4} 
                       compact={compact} 
                       isMobileGrid 
-                      isLastOnRight 
                       featureNumber={5}
                     />
                   </div>
@@ -152,7 +151,7 @@ export function SensoryFeatures({ compact = false }: { compact?: boolean }) {
                       </div>
                     ))}
                     <div className="flex justify-center">
-                      <FeatureCard feature={lastFeature} index={4} compact={compact} isTabletGrid isLastOnRight featureNumber={5} />
+                      <FeatureCard feature={lastFeature} index={4} compact={compact} isTabletGrid featureNumber={5} />
                     </div>
                   </div>
                 </div>
@@ -194,7 +193,6 @@ function FeatureCard({
   isMobileGrid = false,
   isDesktop = false,
   isTabletGrid = false,
-  isLastOnRight = false,
   featureNumber,
 }: {
   feature: Feature;
@@ -203,7 +201,6 @@ function FeatureCard({
   isMobileGrid?: boolean;
   isDesktop?: boolean;
   isTabletGrid?: boolean;
-  isLastOnRight?: boolean;
   featureNumber: number;
 }) {
   return (
