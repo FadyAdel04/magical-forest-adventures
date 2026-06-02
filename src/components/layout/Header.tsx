@@ -40,6 +40,7 @@ export function Header() {
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState<ActiveHref>("#home");
   const [paperFromScroll, setPaperFromScroll] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
 
   const updateActiveSection = useCallback(() => {
     const home = document.getElementById("home");
@@ -67,6 +68,9 @@ export function Header() {
       setActive("#home");
       setPaperFromScroll(false);
     }
+    
+    // Track scroll state
+    setIsScrolled(window.scrollY > 10);
   }, []);
 
   useEffect(() => {
@@ -89,12 +93,10 @@ export function Header() {
 
   const theme = resolveHeaderTheme(active, paperFromScroll);
 
-  const headerShellClass =
-    theme === "paper"
-      ? "border-b border-border/70 bg-cream shadow-sm backdrop-blur-xl"
-      : theme === "order"
-        ? "border-b border-white/10 bg-[oklch(0.18_0.05_150/0.88)] shadow-md backdrop-blur-xl"
-        : "bg-transparent";
+  // Always forest green with slight variation when scrolled
+  const headerShellClass = isScrolled
+    ? "bg-[#0d3d22] shadow-lg border-b border-white/10"
+    : "bg-[#1a5c38]";
 
   const orderBtnClass =
     theme === "paper"
@@ -113,7 +115,7 @@ export function Header() {
 
   return (
     <header
-      className={`fixed top-0 inset-x-0 z-100 py-2.5 transition-[background-color,box-shadow,border-color] duration-300 sm:py-3 ${headerShellClass}`}
+      className={` top-0 inset-x-0 z-100 py-2.5 transition-all duration-300 sm:py-3 text-cream shadow-md ${headerShellClass}`}
     >
       <div className="container relative mx-auto flex min-h-18 items-center justify-center px-4 md:grid md:min-h-0 md:grid-cols-[1fr_auto_1fr] md:gap-2">
         <button
