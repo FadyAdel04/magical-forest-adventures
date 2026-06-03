@@ -78,7 +78,7 @@ export function Product() {
               src={bee}
               alt="نحلة المغامرة"
               cutout={false}
-              className="w-2/3 drop-shadow-[0_12px_24px_oklch(0.35_0.06_145/0.28)]"
+              className="w-2/4 drop-shadow-[0_12px_24px_oklch(0.35_0.06_145/0.28)]"
             />
           </div>
         </div>
@@ -134,6 +134,10 @@ export function Product() {
                         key={slides[safeIndex].id}
                         src={slides[safeIndex].src}
                         alt={slides[safeIndex].title}
+                        width={600}
+                        height={500}
+                        loading="lazy"
+                        decoding="async"
                         initial={{ opacity: 0, scale: 0.95 }}
                         animate={{ opacity: 1, scale: 1 }}
                         exit={{ opacity: 0, scale: 0.95 }}

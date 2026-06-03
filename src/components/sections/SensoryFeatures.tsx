@@ -57,13 +57,14 @@ export function SensoryFeatures({ compact = false }: { compact?: boolean }) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.9, duration: 0.6 }}
-      className={`w-full ${compact ? "mt-10 px-1.5 max-sm:mt-14 sm:mt-4 sm:px-2" : "px-3 pb-6 sm:px-6 sm:pb-8"}`}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, amount: 0.1 }}
+      transition={{ delay: 0.1, duration: 0.6 }}
+      className={`w-full  ${compact ? "mt-10 px-1.5 max-sm:mt-14 sm:mt-4 sm:px-2" : "px-3 pb-6 sm:px-6 sm:pb-8"}`}
     >
       <div className={`mx-auto ${compact ? "max-w-6xl" : "container max-w-6xl"}`}>
         {/* Glassmorphism Panel with Forest Green Theme */}
-        <div className="relative rounded-3xl overflow-hidden">
+        <div className="relative rounded-3xl overflow-hidden opacity-80">
           {/* Glass background with forest green tint and blur */}
           <div className="absolute inset-0 bg-[rgba(20,55,28,0.55)] backdrop-blur-lg border border-[rgba(150,210,110,0.35)] rounded-3xl shadow-[0_12px_32px_rgba(0,0,0,0.2)]" />
           
@@ -83,7 +84,7 @@ export function SensoryFeatures({ compact = false }: { compact?: boolean }) {
             >
               {/* Section Title */}
               <h2
-                className={`flex items-center justify-center gap-1 text-center font-display font-black text-white drop-shadow-md ${
+                className={`flex items-center text-[18px]  justify-center gap-1 text-center font-display font-black text-white drop-shadow-md ${
                   compact
                     ? "mb-2 text-xs sm:mb-4 sm:text-base md:text-lg"
                     : "mb-8 text-xl sm:mb-10 sm:text-2xl md:text-[2.1rem]"
@@ -203,8 +204,9 @@ function FeatureCard({
   return (
     <motion.article
       initial={{ opacity: 0, y: 12 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.35, delay: 0.95 + index * 0.05 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, amount: 0.1 }}
+      transition={{ duration: 0.35, delay: index * 0.05 }}
       className="flex flex-col items-center px-0.5 py-3 text-center w-full relative"
     >
       {/* IMAGE FIRST - larger with no frame */}

@@ -1,39 +1,110 @@
+import { lazy, Suspense } from "react";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import { Toaster } from "@/components/ui/sonner";
 import { StoreProvider } from "@/providers/StoreProvider";
 import { LandingPage } from "@/pages/LandingPage";
-import { AdminLayout } from "@/admin/layout/AdminLayout";
-import { ProtectedRoute } from "@/admin/components/ProtectedRoute";
-import { LoginPage } from "@/admin/pages/LoginPage";
-import { DashboardPage } from "@/admin/pages/DashboardPage";
-import { ProductsPage } from "@/admin/pages/ProductsPage";
-import { OrdersPage } from "@/admin/pages/OrdersPage";
-import { SettingsPage } from "@/admin/pages/SettingsPage";
+
+// ── Admin routes — lazy-loaded so they are NEVER shipped to landing page visitors ──
+const AdminLayout = lazy(() =>
+  import("@/admin/layout/AdminLayout").then((m) => ({ default: m.AdminLayout })),
+);
+const ProtectedRoute = lazy(() =>
+  import("@/admin/components/ProtectedRoute").then((m) => ({
+    default: m.ProtectedRoute,
+  })),
+);
+const LoginPage = lazy(() =>
+  import("@/admin/pages/LoginPage").then((m) => ({ default: m.LoginPage })),
+);
+const DashboardPage = lazy(() =>
+  import("@/admin/pages/DashboardPage").then((m) => ({
+    default: m.DashboardPage,
+  })),
+);
+const ProductsPage = lazy(() =>
+  import("@/admin/pages/ProductsPage").then((m) => ({
+    default: m.ProductsPage,
+  })),
+);
+const OrdersPage = lazy(() =>
+  import("@/admin/pages/OrdersPage").then((m) => ({ default: m.OrdersPage })),
+);
+const SettingsPage = lazy(() =>
+  import("@/admin/pages/SettingsPage").then((m) => ({
+    default: m.SettingsPage,
+  })),
+);
+
+/** Minimal spinner shown while admin chunks load */
+function AdminFallback() {
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-background text-muted-foreground text-sm">
+      جاري التحميل…
+    </div>
+  );
+}
 
 export default function App() {
   return (
     <StoreProvider>
-    <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<LandingPage />} />
-        <Route path="/admin/login" element={<LoginPage />} />
-        <Route
-          path="/admin"
-          element={
-            <ProtectedRoute>
-              <AdminLayout />
-            </ProtectedRoute>
-          }
-        >
-          <Route index element={<DashboardPage />} />
-          <Route path="products" element={<ProductsPage />} />
-          <Route path="orders" element={<OrdersPage />} />
-          <Route path="settings" element={<SettingsPage />} />
-        </Route>
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
-      <Toaster position="top-center" richColors dir="rtl" />
-    </BrowserRouter>
+      <BrowserRouter>
+        <Routes>
+          <Route path="/" element={<LandingPage />} />
+          <Route
+            path="/admin/login"
+            element={
+              <Suspense fallback={<AdminFallback />}>
+                <LoginPage />
+              </Suspense>
+            }
+          />
+          <Route
+            path="/admin"
+            element={
+              <Suspense fallback={<AdminFallback />}>
+                <ProtectedRoute>
+                  <AdminLayout />
+                </ProtectedRoute>
+              </Suspense>
+            }
+          >
+            <Route
+              index
+              element={
+                <Suspense fallback={<AdminFallback />}>
+                  <DashboardPage />
+                </Suspense>
+              }
+            />
+            <Route
+              path="products"
+              element={
+                <Suspense fallback={<AdminFallback />}>
+                  <ProductsPage />
+                </Suspense>
+              }
+            />
+            <Route
+              path="orders"
+              element={
+                <Suspense fallback={<AdminFallback />}>
+                  <OrdersPage />
+                </Suspense>
+              }
+            />
+            <Route
+              path="settings"
+              element={
+                <Suspense fallback={<AdminFallback />}>
+                  <SettingsPage />
+                </Suspense>
+              }
+            />
+          </Route>
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+        <Toaster position="top-center" richColors dir="rtl" />
+      </BrowserRouter>
     </StoreProvider>
   );
 }

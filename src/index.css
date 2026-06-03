@@ -1,4 +1,4 @@
-@import "tailwindcss" source(none);
+@import "tailwindcss" ;
 @source "../src";
 @import "tw-animate-css";
 
@@ -148,10 +148,10 @@
     50% { filter: drop-shadow(0 0 30px oklch(0.82 0.16 82 / 0.9)); }
   }
 
-  .animate-float-y { animation: float-y 5s ease-in-out infinite; }
-  .animate-swing { animation: swing 4s ease-in-out infinite; transform-origin: top center; }
-  .animate-firefly { animation: firefly 4s ease-in-out infinite; }
-  .animate-shimmer { animation: shimmer 3s ease-in-out infinite; }
+  .animate-float-y { animation: float-y 5s ease-in-out infinite; will-change: transform; }
+  .animate-swing { animation: swing 4s ease-in-out infinite; transform-origin: top center; will-change: transform; }
+  .animate-firefly { animation: firefly 4s ease-in-out infinite; will-change: opacity, transform; }
+  .animate-shimmer { animation: shimmer 3s ease-in-out infinite; will-change: filter; }
 
   .hero-headline-lime {
     color: var(--color-lime);

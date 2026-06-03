@@ -17,12 +17,16 @@ export function Hero() {
       id="home"
       className="relative w-full overflow-hidden max-sm:min-h-0 sm:h-svh sm:min-h-[580px] sm:max-h-[900px]"
     >
-      {/* Background Image — portrait asset on mobile, landscape on sm+ */}
+      {/* Background Image — portrait asset on mobile, landscape on sm+
+           fetchpriority="high" makes these the top-priority network requests (LCP fix) */}
       <img
         src={forestBgMobile}
         alt=""
         width={1080}
         height={1920}
+        fetchPriority="high"
+        loading="eager"
+        decoding="async"
         className="absolute inset-0 h-full w-full object-cover object-center sm:hidden"
       />
       <img
@@ -30,6 +34,9 @@ export function Hero() {
         alt=""
         width={1920}
         height={1280}
+        fetchPriority="high"
+        loading="eager"
+        decoding="async"
         className="absolute inset-0 hidden h-full w-full object-cover object-[center_38%] sm:block"
       />
       {/* Overlay Gradients */}
