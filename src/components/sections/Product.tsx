@@ -1,6 +1,14 @@
 import { useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronLeft, ChevronRight, Book, Headphones, Flame, Puzzle, type LucideIcon } from "lucide-react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  Book,
+  Headphones,
+  Flame,
+  Puzzle,
+  type LucideIcon,
+} from "lucide-react";
 import { monkeyCharacter } from "@/assets/characters";
 import { ForestCharacter } from "@/components/shared/ForestCharacter";
 import { Fireflies } from "./Fireflies";
@@ -38,11 +46,8 @@ export function Product() {
   if (!catalog.active) return null;
 
   const safeIndex = slides.length ? index % slides.length : 0;
-  const showOffer =
-    catalog.offerEnabled && catalog.priceBefore > catalog.priceAfter;
-  const discount = showOffer
-    ? calcDiscountPercent(catalog.priceBefore, catalog.priceAfter)
-    : 0;
+  const showOffer = catalog.offerEnabled && catalog.priceBefore > catalog.priceAfter;
+  const discount = showOffer ? calcDiscountPercent(catalog.priceBefore, catalog.priceAfter) : 0;
 
   const next = () => setIndex((i) => (i + 1) % slides.length);
   const prev = () => setIndex((i) => (i - 1 + slides.length) % slides.length);
@@ -52,10 +57,7 @@ export function Product() {
   };
 
   return (
-    <section
-      id="product"
-      className="relative scroll-mt-20 overflow-x-hidden py-6 sm:py-10"
-    >
+    <section id="product" className="relative scroll-mt-20 overflow-x-hidden py-6 sm:py-10">
       <div className="product-paper-bg absolute inset-0" />
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_15%,oklch(0.75_0.14_85/0.14)_0%,transparent_40%)]" />
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_10%_85%,oklch(0.5_0.1_145/0.07)_0%,transparent_45%)]" />
@@ -93,79 +95,67 @@ export function Product() {
           >
             {slides.length > 0 && (
               <>
-                <div className="relative overflow-hidden rounded-4xl bg-gradient-forest shadow-magic">
-                  <div className="relative aspect-4/3 sm:aspect-5/4">
+                <div className="relative">
+                  {/* Left Arrow */}
+                  {slides.length > 1 && (
+                    <button
+                      type="button"
+                      aria-label="السابق"
+                      onClick={next}
+                      className="absolute left-2 top-1/2 z-20 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-[#D8D2BF] text-forest shadow-md transition hover:scale-105"
+                    >
+                      <ChevronLeft className="h-5 w-5" />
+                    </button>
+                  )}
+
+                  {/* Right Arrow */}
+                  {slides.length > 1 && (
+                    <button
+                      type="button"
+                      aria-label="التالي"
+                      onClick={prev}
+                      className="absolute right-2 top-1/2 z-20 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-[#D8D2BF] text-forest shadow-md transition hover:scale-105"
+                    >
+                      <ChevronRight className="h-5 w-5" />
+                    </button>
+                  )}
+
+                  {/* Product Display */}
+                  <div className="relative flex min-h-[320px] items-center justify-center sm:min-h-[520px]">
+                    {/* Background Circle */}
+                    <div className="absolute h-[85%] w-[85%] rounded-full bg-[#E8E5D6]" />
+
+                    {/* Decorative Blur */}
+                    <div className="absolute left-8 top-10 h-16 w-16 rounded-full bg-[#D8D2BF]/40 blur-xl" />
+                    <div className="absolute bottom-10 right-8 h-20 w-20 rounded-full bg-[#D8D2BF]/30 blur-xl" />
+
                     <AnimatePresence mode="wait">
                       <motion.img
                         key={slides[safeIndex].id}
                         src={slides[safeIndex].src}
                         alt={slides[safeIndex].title}
-                        initial={{ opacity: 0, scale: 1.04 }}
+                        initial={{ opacity: 0, scale: 0.95 }}
                         animate={{ opacity: 1, scale: 1 }}
-                        exit={{ opacity: 0, scale: 0.98 }}
-                        transition={{ duration: 0.35 }}
-                        className="absolute inset-0 h-full w-full object-cover"
+                        exit={{ opacity: 0, scale: 0.95 }}
+                        transition={{ duration: 0.4 }}
+                        className="relative z-10 h-[280px] w-full object-contain sm:h-[500px]"
                       />
                     </AnimatePresence>
-                    <div className="absolute inset-x-0 bottom-0 bg-linear-to-t from-[oklch(0.18_0.05_150/0.85)] to-transparent p-4 pt-12">
-                      <p className="font-display text-lg font-black text-cream sm:text-xl">
-                        {slides[safeIndex].title}
-                      </p>
-                      <p className="text-xs text-cream/85 sm:text-sm">
-                        {slides[safeIndex].caption}
-                      </p>
-                    </div>
                   </div>
 
-                  {slides.length > 1 && (
-                    <>
+                  {/* Dots */}
+                  <div className="mt-4 flex justify-center gap-2">
+                    {slides.map((_, i) => (
                       <button
+                        key={i}
                         type="button"
-                        aria-label="السابق"
-                        onClick={prev}
-                        className="absolute right-3 top-1/2 z-10 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-white/40 bg-white/20 text-white backdrop-blur-md transition hover:bg-white/35"
-                      >
-                        <ChevronRight className="h-4 w-4" />
-                      </button>
-                      <button
-                        type="button"
-                        aria-label="التالي"
-                        onClick={next}
-                        className="absolute left-3 top-1/2 z-10 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-white/40 bg-white/20 text-white backdrop-blur-md transition hover:bg-white/35"
-                      >
-                        <ChevronLeft className="h-4 w-4" />
-                      </button>
-                    </>
-                  )}
-                </div>
-
-                <div className="mt-3 flex justify-center gap-2">
-                  {slides.map((s, i) => (
-                    <button
-                      key={s.id}
-                      type="button"
-                      aria-label={s.title}
-                      onClick={() => setIndex(i)}
-                      className={`h-1.5 rounded-full transition-all ${
-                        i === safeIndex ? "w-6 bg-forest" : "w-1.5 bg-forest/30"
-                      }`}
-                    />
-                  ))}
-                </div>
-
-                <div className="mt-3 grid grid-cols-4 gap-1.5">
-                  {slides.map((s, i) => (
-                    <button
-                      key={s.id}
-                      type="button"
-                      onClick={() => setIndex(i)}
-                      className={`overflow-hidden rounded-lg border-2 transition ${
-                        i === safeIndex ? "border-gold scale-[1.02]" : "border-transparent opacity-70"
-                      }`}
-                    >
-                      <img src={s.src} alt="" className="aspect-square w-full object-cover" />
-                    </button>
-                  ))}
+                        onClick={() => setIndex(i)}
+                        className={`h-2 rounded-full transition-all duration-300 ${
+                          i === safeIndex ? "w-8 bg-forest" : "w-2 bg-forest/30"
+                        }`}
+                      />
+                    ))}
+                  </div>
                 </div>
               </>
             )}
@@ -181,15 +171,15 @@ export function Product() {
             <span className="inline-block rounded-full bg-gold/20 px-3 py-0.5 text-xs font-bold text-[oklch(0.45_0.1_65)]">
               {catalog.badge}
             </span>
-            <h2 className="mt-2 font-display text-2xl font-black leading-tight text-forest-deep sm:text-3xl md:text-4xl">
-              {catalog.title}{" "}
-              <span className="text-forest">{catalog.titleHighlight}</span>
+            <h2 className="mt-2 font-display text-2xl font-black leading-tight text-forest-deep text-center sm:text-3xl md:text-4xl">
+              {catalog.title}
+              <span className="mt-2 block text-forest text-lg">{catalog.titleHighlight}</span>
             </h2>
             <p className="mt-2 text-sm leading-relaxed text-muted-foreground sm:text-base">
               {catalog.description}
             </p>
 
-            <ul className="mt-4 space-y-2.5">
+            <ul className="mt-8 grid grid-cols-2 gap-4 sm:grid-cols-2 lg:grid-cols-4">
               {catalog.features.map((item, i) => {
                 const Icon = FEATURE_ICONS[i % FEATURE_ICONS.length];
                 return (
