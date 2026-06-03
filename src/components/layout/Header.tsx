@@ -93,10 +93,9 @@ export function Header() {
 
   const theme = resolveHeaderTheme(active, paperFromScroll);
 
-  // Always forest green with slight variation when scrolled
   const headerShellClass = isScrolled
-    ? "bg-[#0d3d22] shadow-lg border-b border-white/10"
-    : "bg-[#1a5c38]";
+    ? "bg-[#1c290d] shadow-lg border-b border-white/10"
+    : "bg-[#1c290d]";
 
   const orderBtnClass =
     theme === "paper"

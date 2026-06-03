@@ -11,7 +11,6 @@ import {
   Truck,
 } from "lucide-react";
 import { explorerCharacter } from "@/assets/characters";
-import { BlinkingExplorer } from "@/components/shared/BlinkingExplorer";
 import { ForestCharacter } from "@/components/shared/ForestCharacter";
 import { Fireflies } from "./Fireflies";
 import { useStore } from "@/hooks/useStore";
@@ -177,13 +176,13 @@ function SearchableSelect({
             <button
               type="button"
               onClick={handleClear}
-              className="absolute left-2 top-1/2 -translate-y-1/2 text-white/50 hover:text-white/80"
+              className="absolute left-2 top-1/2 -translate-y-1/2 text-cream/50 hover:text-cream/80"
             >
               <X className="h-3.5 w-3.5" />
             </button>
           ) : (
             <ChevronDown
-              className={`absolute left-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-white/50 transition-transform duration-200 ${
+              className={`absolute left-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-cream/50 transition-transform duration-200 ${
                 isOpen ? "rotate-180" : ""
               }`}
             />
@@ -203,15 +202,15 @@ function SearchableSelect({
                   onMouseEnter={() => setHighlightedIndex(idx)}
                   className={`w-full px-3 py-2 text-right text-sm transition-colors ${
                     highlightedIndex === idx
-                      ? "bg-forest/20 text-white"
+                      ? "bg-forest/20 text-forest-deep"
                       : value === option
-                      ? "bg-forest/10 text-white font-medium"
+                      ? "bg-forest/10 text-forest-deep font-medium"
                       : "text-gray-700 hover:bg-gray-50"
                   }`}
                 >
                   {option}
                   {value === option && (
-                    <Check className="inline mr-2 h-3.5 w-3.5 text-white" />
+                    <Check className="inline mr-2 h-3.5 w-3.5 text-forest" />
                   )}
                 </button>
               ))}
@@ -359,7 +358,7 @@ export function Order() {
       id="order"
       className="order-forest-section relative isolate scroll-mt-20 overflow-hidden py-8 pb-24 sm:py-10 sm:pb-10"
     >
-      <div className="absolute inset-0 bg-gradient-forest" />
+      <div className="absolute inset-0 bg-[#1c290d]" />
       <div className="absolute inset-0 hero-vignette" />
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_15%,oklch(0.75_0.14_85/0.14)_0%,transparent_42%)]" />
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_15%_85%,oklch(0.55_0.12_145/0.22)_0%,transparent_48%)]" />
@@ -389,12 +388,13 @@ export function Order() {
         className="pointer-events-none absolute bottom-0 left-0 z-10 w-[min(32vw,120px)] md:hidden"
         aria-hidden
       >
-        <motion.div
-          animate={{ y: [0, -8, 0] }}
-          transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
-        >
-          <BlinkingExplorer className="w-full translate-y-[10%] drop-shadow-[0_16px_28px_rgba(0,0,0,0.45)]" />
-        </motion.div>
+        <div className="animate-float-y">
+          <ForestCharacter
+            src={explorerCharacter}
+            alt="مستكشف الغابة"
+            className="w-full translate-y-[10%] drop-shadow-[0_16px_28px_rgba(0,0,0,0.45)]"
+          />
+        </div>
       </motion.div>
 
       <div className="container relative z-20 mx-auto max-w-2xl px-4">
@@ -408,10 +408,10 @@ export function Order() {
             <Sparkles className="h-3 w-3" />
             الكمية محدودة
           </span>
-          <h2 className="text-glow-gold mt-2 font-display text-2xl font-black text-white sm:text-3xl md:text-4xl">
+          <h2 className="text-glow-gold mt-2 font-display text-2xl font-black text-cream sm:text-3xl md:text-4xl">
             ابدأ مغامرتك اليوم
           </h2>
-          <p className="mt-1 text-sm text-white/90 sm:text-base">
+          <p className="mt-1 text-sm text-cream/90 sm:text-base">
             مغامرات نسيج في الغابة السحرية
           </p>
         </motion.div>
@@ -429,7 +429,7 @@ export function Order() {
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div>
                 {showOffer && (
-                  <p className="text-xs text-white/70 line-through">
+                  <p className="text-xs text-cream/70 line-through">
                     <EnNum>{formatPrice(catalog.priceBefore)}</EnNum>
                     {discount > 0 && (
                       <>
@@ -439,15 +439,15 @@ export function Order() {
                     )}
                   </p>
                 )}
-                <p className="font-display text-2xl font-black text-white sm:text-3xl">
+                <p className="font-display text-2xl font-black text-cream sm:text-3xl">
                   <EnNum>{formatPrice(unitPrice)}</EnNum>{" "}
-                  <span className="text-sm font-bold text-white/70">/ للصندوق</span>
+                  <span className="text-sm font-bold text-cream/70">/ للصندوق</span>
                 </p>
               </div>
               {form.gov && (
-                <p className="text-xs text-white/80">
+                <p className="text-xs text-cream/80">
                   شحن إلى {form.gov}:{" "}
-                  <span className="font-bold text-white">
+                  <span className="font-bold text-cream">
                     <EnNum>{formatShippingFee(shippingFee)}</EnNum>
                   </span>
                 </p>
@@ -459,19 +459,19 @@ export function Order() {
             {submitted ? (
               <div className="py-5 text-center sm:py-6">
                 <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-gradient-forest shadow-glow">
-                  <Check className="h-7 w-7 text-white" strokeWidth={3} />
+                  <Check className="h-7 w-7 text-cream" strokeWidth={3} />
                 </div>
-                <h3 className="mt-3 font-display text-lg font-black text-white sm:text-xl">
+                <h3 className="mt-3 font-display text-lg font-black text-cream sm:text-xl">
                   تم استلام طلبك بنجاح! 🌿
                 </h3>
                 {orderNumber && (
-                  <p className="mt-2 text-sm font-bold text-white/90">
+                  <p className="mt-2 text-sm font-bold text-cream/90">
                     رقم الطلب: <EnNum className="font-mono">{orderNumber}</EnNum>
                   </p>
                 )}
-                <p className="mt-1.5 text-xs text-white/70 sm:text-sm">
+                <p className="mt-1.5 text-xs text-cream/70 sm:text-sm">
                   أرسل تفاصيل طلبك على واتساب{" "}
-                  <span dir="ltr" className="inline font-semibold text-white">
+                  <span dir="ltr" className="inline font-semibold text-cream">
                     <EnNum>{WHATSAPP_NUMBER_DISPLAY}</EnNum>
                   </span>{" "}
                   لتأكيد الطلب، أو انتظر اتصالنا خلال ساعات قليلة.
@@ -481,7 +481,7 @@ export function Order() {
                     href={whatsappHref}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="mt-4 inline-flex w-full max-w-sm items-center justify-center gap-2.5 rounded-full bg-gradient-forest px-5 py-3 text-sm font-bold text-white shadow-[0_8px_24px_rgba(0,0,0,0.25)] transition hover:scale-[1.02] sm:w-auto sm:px-6"
+                    className="mt-4 inline-flex w-full max-w-sm items-center justify-center gap-2.5 rounded-full bg-gradient-forest px-5 py-3 text-sm font-bold text-cream shadow-[0_8px_24px_rgba(0,0,0,0.25)] transition hover:scale-[1.02] sm:w-auto sm:px-6"
                   >
                     <WhatsAppIcon className="h-5 w-5 shrink-0" />
                     إرسال الطلب على واتساب
@@ -490,10 +490,10 @@ export function Order() {
               </div>
             ) : (
               <form onSubmit={onSubmit} noValidate className="space-y-3">
-                <h3 className="mb-0.5 font-display text-lg font-black text-white sm:text-xl">
+                <h3 className="mb-0.5 font-display text-lg font-black text-cream sm:text-xl">
                   معلومات الطلب
                 </h3>
-                <p className="text-xs text-white/70">
+                <p className="text-xs text-cream/70">
                   الحقول بعلامة <span className="text-red-300">*</span> مطلوبة
                 </p>
 
@@ -583,15 +583,15 @@ export function Order() {
         transition={{ duration: 0.2 }}
         className="flex flex-row-reverse items-center justify-between gap-3 rounded-xl border border-white/30 bg-gradient-to-r from-white/15 to-white/10 backdrop-blur-md px-4 py-3 shadow-lg"
       >
-        <div className="flex flex-row-reverse items-center gap-3 text-white">
+        <div className="flex flex-row-reverse items-center gap-3 text-cream">
           <div className="rounded-full bg-white/20 p-2">
-            <Truck className="h-5 w-5 shrink-0 text-white" />
+            <Truck className="h-5 w-5 shrink-0 text-cream" />
           </div>
           <div className="text-right">
-            <p className="text-sm font-bold text-white">
+            <p className="text-sm font-bold text-cream">
               رسوم الشحن إلى <span className="text-gold">{form.gov}</span>
             </p>
-            <p className="text-xs text-white/70">
+            <p className="text-xs text-cream/70">
               حسب أسعار التوصيل المحددة في إعدادات المتجر
             </p>
           </div>
@@ -608,7 +608,7 @@ export function Order() {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="rounded-lg border border-white/20 bg-white/10 backdrop-blur-sm px-4 py-3 text-center text-sm text-white/70 shadow-sm"
+        className="rounded-lg border border-white/20 bg-white/10 backdrop-blur-sm px-4 py-3 text-center text-sm text-cream/70 shadow-sm"
       >
         🚚 اختر المحافظة لعرض رسوم الشحن قبل إتمام الطلب
       </motion.p>
@@ -667,22 +667,22 @@ export function Order() {
                 </Field>
 
                 <div className="flex items-center justify-between rounded-xl border border-white/20 bg-white/10 backdrop-blur-sm p-2.5">
-                  <span className="text-sm font-bold text-white">الكمية</span>
+                  <span className="text-sm font-bold text-cream">الكمية</span>
                   <div className="flex items-center gap-2">
                     <button
                       type="button"
                       onClick={() => setQty(Math.max(1, qty - 1))}
-                      className="flex h-8 w-8 items-center justify-center rounded-full border border-white/30 bg-white/20 text-white shadow-sm transition hover:bg-white/30"
+                      className="flex h-8 w-8 items-center justify-center rounded-full border border-white/30 bg-white/20 text-cream shadow-sm transition hover:bg-white/30"
                     >
                       <Minus className="h-3.5 w-3.5" />
                     </button>
-                    <EnNum className="min-w-6 text-center text-lg font-black text-white">
+                    <EnNum className="min-w-6 text-center text-lg font-black text-cream">
                       {formatNumber(qty)}
                     </EnNum>
                     <button
                       type="button"
                       onClick={() => setQty(Math.min(10, qty + 1))}
-                      className="flex h-8 w-8 items-center justify-center rounded-full border border-white/30 bg-white/20 text-white shadow-sm transition hover:bg-white/30"
+                      className="flex h-8 w-8 items-center justify-center rounded-full border border-white/30 bg-white/20 text-cream shadow-sm transition hover:bg-white/30"
                     >
                       <Plus className="h-3.5 w-3.5" />
                     </button>
@@ -691,16 +691,16 @@ export function Order() {
 
                 <div className="space-y-1.5 rounded-xl border border-white/20 bg-white/10 backdrop-blur-sm px-3 py-2.5 text-sm">
                   <div className="flex justify-between gap-2">
-                    <span className="text-white/80">
+                    <span className="text-cream/80">
                       المجموع (<EnNum>{formatNumber(qty)}</EnNum>×)
                     </span>
-                    <EnNum className="font-semibold text-white">{formatPrice(subtotal)}</EnNum>
+                    <EnNum className="font-semibold text-cream">{formatPrice(subtotal)}</EnNum>
                   </div>
                   <div className="flex justify-between gap-2">
-                    <span className="text-white/80">
+                    <span className="text-cream/80">
                       الشحن{form.gov ? ` — ${form.gov}` : ""}
                     </span>
-                    <span className={cn("font-semibold", form.gov ? "text-white" : "text-white/50")}>
+                    <span className={cn("font-semibold", form.gov ? "text-cream" : "text-cream/50")}>
                       {form.gov ? (
                         <EnNum>{formatShippingFee(shippingFee)}</EnNum>
                       ) : (
@@ -708,7 +708,7 @@ export function Order() {
                       )}
                     </span>
                   </div>
-                  <div className="flex justify-between gap-2 border-t border-white/20 pt-1.5 font-bold text-white">
+                  <div className="flex justify-between gap-2 border-t border-white/20 pt-1.5 font-bold text-cream">
                     <span>الإجمالي</span>
                     <EnNum className="font-display text-lg">{formatPrice(total)}</EnNum>
                   </div>
@@ -717,7 +717,7 @@ export function Order() {
                 <button
                   type="submit"
                   disabled={!isReady || submitting || isLoading}
-                  className="mt-1.5 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-forest py-2.5 text-sm font-bold text-white shadow-lg transition-all hover:scale-[1.02] hover:shadow-glow disabled:cursor-not-allowed disabled:opacity-60"
+                  className="mt-1.5 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-forest py-2.5 text-sm font-bold text-cream shadow-lg transition-all hover:scale-[1.02] hover:shadow-glow disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   <ShoppingBag className="h-4 w-4" />
                   {submitting ? "جاري إرسال الطلب..." : "اطلب الآن"}
@@ -734,7 +734,7 @@ export function Order() {
 
 // Glass input styles
 const inputCls =
-  "w-full rounded-lg border border-white/30 bg-white/20 backdrop-blur-sm px-3 py-2 text-sm text-white outline-none transition placeholder:text-white/40 focus:border-white/60 focus:ring-2 focus:ring-white/30";
+  "w-full rounded-lg border border-white/30 bg-white/20 backdrop-blur-sm px-3 py-2 text-sm text-cream outline-none transition placeholder:text-cream/40 focus:border-white/60 focus:ring-2 focus:ring-white/30";
 
 const inputErrorCls = "border-red-400/60 focus:border-red-400 focus:ring-red-400/30";
 
@@ -758,12 +758,12 @@ function Field({
   const errorId = htmlFor ? `${htmlFor}-error` : undefined;
   return (
     <div className={className}>
-      <label htmlFor={htmlFor} className="mb-1 block text-xs font-bold text-white">
+      <label htmlFor={htmlFor} className="mb-1 block text-xs font-bold text-cream">
         {label}
         {required && <span className="ms-0.5 text-red-300">*</span>}
       </label>
       {hint && !error && (
-        <p className="mb-1 text-[11px] text-white/60">{hint}</p>
+        <p className="mb-1 text-[11px] text-cream/60">{hint}</p>
       )}
       {children}
       {error && (

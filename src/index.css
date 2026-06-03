@@ -148,41 +148,6 @@
     50% { filter: drop-shadow(0 0 30px oklch(0.82 0.16 82 / 0.9)); }
   }
 
-  @keyframes explorer-blink {
-    0%,
-    42%,
-    44%,
-    100% {
-      transform: scaleY(0);
-    }
-    43% {
-      transform: scaleY(1);
-    }
-  }
-
-  .explorer-eyelid {
-    position: absolute;
-    z-index: 2;
-    width: 8.5%;
-    height: 4.2%;
-    border-radius: 45%;
-    background: oklch(0.72 0.14 58);
-    box-shadow: 0 0 0 1px oklch(0.62 0.12 55 / 0.35);
-    transform: scaleY(0);
-    transform-origin: center;
-    pointer-events: none;
-    animation: explorer-blink 5.5s ease-in-out infinite;
-  }
-  .explorer-eyelid--left {
-    top: 31%;
-    left: 35.5%;
-  }
-  .explorer-eyelid--right {
-    top: 31%;
-    left: 52%;
-    animation-delay: 0.04s;
-  }
-
   .animate-float-y { animation: float-y 5s ease-in-out infinite; }
   .animate-swing { animation: swing 4s ease-in-out infinite; transform-origin: top center; }
   .animate-firefly { animation: firefly 4s ease-in-out infinite; }

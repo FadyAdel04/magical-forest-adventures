@@ -9,7 +9,7 @@ import {
   Puzzle,
   type LucideIcon,
 } from "lucide-react";
-import { monkeyCharacter } from "@/assets/characters";
+import bee from "@/assets/bee.png";
 import { ForestCharacter } from "@/components/shared/ForestCharacter";
 import { Fireflies } from "./Fireflies";
 import { useStore } from "@/hooks/useStore";
@@ -63,7 +63,7 @@ export function Product() {
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_10%_85%,oklch(0.5_0.1_145/0.07)_0%,transparent_45%)]" />
       <Fireflies count={14} />
 
-      {/* Monkey - moved to LEFT side */}
+      {/* Bee - moved to LEFT side */}
       <motion.div
         initial={{ opacity: 0, y: -12 }}
         whileInView={{ opacity: 1, y: 0 }}
@@ -75,10 +75,10 @@ export function Product() {
           <div className="h-6 w-0.5 rounded-full bg-linear-to-b from-[oklch(0.55_0.1_130)] to-[oklch(0.42_0.08_55)] opacity-90 sm:h-7" />
           <div className="flex w-full origin-[top_center] animate-swing flex-col items-center">
             <ForestCharacter
-              src={monkeyCharacter}
-              alt="قرد المغامرة"
+              src={bee}
+              alt="نحلة المغامرة"
               cutout={false}
-              className="w-full drop-shadow-[0_12px_24px_oklch(0.35_0.06_145/0.28)]"
+              className="w-8/9 drop-shadow-[0_12px_24px_oklch(0.35_0.06_145/0.28)]"
             />
           </div>
         </div>

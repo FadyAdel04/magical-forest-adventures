@@ -1,9 +1,8 @@
 import { motion } from "framer-motion";
 import { Leaf } from "lucide-react";
-import { monkeyCharacter } from "@/assets/characters";
+import { explorerCharacter, monkeyCharacter } from "@/assets/characters";
 import forestBg from "@/assets/website bg.png";
 import forestBgMobile from "@/assets/web (2).png";
-import { BlinkingExplorer } from "@/components/shared/BlinkingExplorer";
 import { ForestCharacter } from "@/components/shared/ForestCharacter";
 import { Fireflies } from "./Fireflies";
 import { SensoryFeatures } from "./SensoryFeatures";
@@ -51,16 +50,8 @@ export function Hero() {
           {/* Wooden stick */}
           <div className="h-4 w-0.5 rounded-full bg-linear-to-b from-[oklch(0.5_0.09_130)] to-[oklch(0.38_0.07_55)] opacity-90 sm:h-8" />
 
-          {/* Swaying monkey + sign */}
-          <motion.div
-            className="flex w-full origin-top flex-col items-center"
-            animate={{ rotate: [-4, 4, -4] }}
-            transition={{
-              duration: 4,
-              repeat: Infinity,
-              ease: "easeInOut",
-            }}
-          >
+          {/* Swinging monkey + sign */}
+          <div className="flex w-full origin-top animate-swing flex-col items-center">
             <ForestCharacter
               src={monkeyCharacter}
               alt="قرد المغامرة"
@@ -74,7 +65,7 @@ export function Hero() {
                 </p>
               </div>
             </div>
-          </motion.div>
+          </div>
         </div>
       </motion.div>
 
@@ -85,20 +76,13 @@ export function Hero() {
         transition={{ duration: 0.9, delay: 0.25 }}
         className="pointer-events-none absolute bottom-0 left-0 z-35 w-[min(45vw,150px)] sm:w-[min(22vw,160px)] lg:w-[220px] explorer-container"
       >
-        <motion.div
-          className="w-full"
-          animate={{
-            y: [0, -12, 0],
-            rotate: [2, -2, 2],
-          }}
-          transition={{
-            duration: 5.5,
-            repeat: Infinity,
-            ease: "easeInOut",
-          }}
-        >
-          <BlinkingExplorer className="w-full translate-y-[6%] drop-shadow-[0_16px_28px_rgba(0,0,0,0.5)] lg:translate-y-[4%] explorer-img" />
-        </motion.div>
+        <div className="w-full animate-float-y">
+          <ForestCharacter
+            src={explorerCharacter}
+            alt="مستكشف الغابة"
+            className="w-full translate-y-[6%] drop-shadow-[0_16px_28px_rgba(0,0,0,0.5)] lg:translate-y-[4%] explorer-img"
+          />
+        </div>
       </motion.div>
 
       {/* ==================== MAIN CONTENT ==================== */}
