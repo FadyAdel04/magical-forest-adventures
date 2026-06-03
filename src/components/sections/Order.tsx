@@ -10,7 +10,6 @@ import {
   X,
   Truck,
 } from "lucide-react";
-import { explorerCharacter } from "@/assets/characters";
 import { ForestCharacter } from "@/components/shared/ForestCharacter";
 import { Fireflies } from "./Fireflies";
 import { useStore } from "@/hooks/useStore";
