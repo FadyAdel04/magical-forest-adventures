@@ -30,6 +30,7 @@ import {
 import { formatPhoneInput } from "@/lib/phone-validation";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import char from "@/assets/Layer 7.png";
 
 const governorates = [...GOVERNORATES];
 
@@ -373,7 +374,7 @@ export function Order() {
         className="pointer-events-none absolute bottom-0 left-0 z-10 hidden w-[min(22vw,180px)] md:block lg:w-[200px]"
       >
         <ForestCharacter
-          src={explorerCharacter}
+          src={char}
           alt="مستكشف الغابة"
           className="w-full translate-y-[8%] drop-shadow-[0_24px_40px_rgba(0,0,0,0.55)]"
         />
@@ -388,11 +389,11 @@ export function Order() {
         className="pointer-events-none absolute bottom-0 left-0 z-10 w-[min(32vw,120px)] md:hidden"
         aria-hidden
       >
-        <div className="animate-float-y">
+        <div className="animate-float-y ">
           <ForestCharacter
-            src={explorerCharacter}
+            src={char}
             alt="مستكشف الغابة"
-            className="w-full translate-y-[10%] drop-shadow-[0_16px_28px_rgba(0,0,0,0.45)]"
+            className="w-full translate-y-[10%]  drop-shadow-[0_16px_28px_rgba(0,0,0,0.45)]"
           />
         </div>
       </motion.div>
@@ -717,7 +718,7 @@ export function Order() {
                 <button
                   type="submit"
                   disabled={!isReady || submitting || isLoading}
-                  className="mt-1.5 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-forest py-2.5 text-sm font-bold text-cream shadow-lg transition-all hover:scale-[1.02] hover:shadow-glow disabled:cursor-not-allowed disabled:opacity-60"
+                  className="mt-1.5 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[#1c290d] py-2.5 text-sm font-bold text-cream shadow-lg transition-all hover:scale-[1.02] hover:shadow-glow disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   <ShoppingBag className="h-4 w-4" />
                   {submitting ? "جاري إرسال الطلب..." : "اطلب الآن"}

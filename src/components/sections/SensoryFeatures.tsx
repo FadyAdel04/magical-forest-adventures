@@ -104,7 +104,7 @@ export function SensoryFeatures({ compact = false }: { compact?: boolean }) {
                 <div className="mb-4 grid grid-cols-2 gap-3">
                   {firstRowFeatures.map((f, i) => (
                     <div key={f.title} className="flex justify-center">
-                      <FeatureCard feature={f} index={i} compact={compact} isMobileGrid featureNumber={i + 1} />
+                      <FeatureCard feature={f} index={i} compact={compact} isMobileGrid />
                     </div>
                   ))}
                 </div>
@@ -113,7 +113,7 @@ export function SensoryFeatures({ compact = false }: { compact?: boolean }) {
                 <div className="mb-4 grid grid-cols-2 gap-3">
                   {secondRowFeatures.map((f, i) => (
                     <div key={f.title} className="flex justify-center">
-                      <FeatureCard feature={f} index={i + 2} compact={compact} isMobileGrid featureNumber={i + 3} />
+                      <FeatureCard feature={f} index={i + 2} compact={compact} isMobileGrid />
                     </div>
                   ))}
                 </div>
@@ -126,7 +126,6 @@ export function SensoryFeatures({ compact = false }: { compact?: boolean }) {
                       index={4} 
                       compact={compact} 
                       isMobileGrid 
-                      featureNumber={5}
                     />
                   </div>
                 </div>
@@ -139,7 +138,7 @@ export function SensoryFeatures({ compact = false }: { compact?: boolean }) {
                   <div className="grid grid-cols-3 gap-3 mb-4 w-full max-w-2xl mx-auto">
                     {features.slice(0, 3).map((f, i) => (
                       <div key={f.title} className="flex justify-center">
-                        <FeatureCard feature={f} index={i} compact={compact} isTabletGrid featureNumber={i + 1} />
+                        <FeatureCard feature={f} index={i} compact={compact} isTabletGrid />
                       </div>
                     ))}
                   </div>
@@ -147,11 +146,11 @@ export function SensoryFeatures({ compact = false }: { compact?: boolean }) {
                   <div className="grid grid-cols-2 gap-3 w-full max-w-xl mx-auto">
                     {features.slice(3, 4).map((f, i) => (
                       <div key={f.title} className="flex justify-center">
-                        <FeatureCard feature={f} index={i + 3} compact={compact} isTabletGrid featureNumber={i + 4} />
+                        <FeatureCard feature={f} index={i + 3} compact={compact} isTabletGrid />
                       </div>
                     ))}
                     <div className="flex justify-center">
-                      <FeatureCard feature={lastFeature} index={4} compact={compact} isTabletGrid featureNumber={5} />
+                      <FeatureCard feature={lastFeature} index={4} compact={compact} isTabletGrid />
                     </div>
                   </div>
                 </div>
@@ -162,7 +161,7 @@ export function SensoryFeatures({ compact = false }: { compact?: boolean }) {
                 <div className="grid grid-cols-5 gap-4 max-w-5xl mx-auto">
                   {features.map((f, i) => (
                     <div key={f.title} className="flex justify-center">
-                      <FeatureCard feature={f} index={i} compact={compact} isDesktop featureNumber={i + 1} />
+                      <FeatureCard feature={f} index={i} compact={compact} isDesktop />
                     </div>
                   ))}
                 </div>
@@ -193,7 +192,6 @@ function FeatureCard({
   isMobileGrid = false,
   isDesktop = false,
   isTabletGrid = false,
-  featureNumber,
 }: {
   feature: Feature;
   index: number;
@@ -201,7 +199,6 @@ function FeatureCard({
   isMobileGrid?: boolean;
   isDesktop?: boolean;
   isTabletGrid?: boolean;
-  featureNumber: number;
 }) {
   return (
     <motion.article
@@ -210,61 +207,51 @@ function FeatureCard({
       transition={{ duration: 0.35, delay: 0.95 + index * 0.05 }}
       className="flex flex-col items-center px-0.5 py-3 text-center w-full relative"
     >
-      {/* Number Badge */}
-      <div className="absolute -top-1.5 -right z-20">
-        <div className="flex h-6 w-6 items-center justify-center rounded-full bg-gradient-to-br from-gold to-amber-500 shadow-lg ring-2 ring-white/30">
-          <span className="text-xs font-black text-forest-deep">
-            {featureNumber}
-          </span>
-        </div>
-      </div>
-
-      {/* Glassmorphism Card with forest theme */}
+      {/* IMAGE FIRST - larger with no frame */}
       <div
-        className={`relative flex items-center justify-center overflow-hidden bg-[rgba(35,75,40,0.55)] backdrop-blur-md shadow-[0_6px_16px_rgba(0,0,0,0.15)] ring-2 ${feature.ring} transition-all duration-300 hover:scale-105 hover:bg-[rgba(45,90,50,0.7)] hover:shadow-[0_8px_24px_rgba(0,0,0,0.25)] ${
+        className={`relative flex items-center justify-center overflow-visible mb-3 ${
           compact
             ? isMobileGrid || isTabletGrid
-              ? "mb-2 h-16 w-16 sm:h-20 sm:w-20"
+              ? "h-20 w-20 sm:h-28 sm:w-28"
               : isDesktop
-              ? "mb-2 h-20 w-20 sm:h-24 sm:w-24"
-              : "mb-1 h-14 w-14 sm:mb-1.5 sm:h-20 sm:w-20 md:h-24 md:w-24"
-            : "mb-4 h-24 w-24 sm:h-28 sm:w-28 md:h-32 md:w-32"
+              ? "h-24 w-24 sm:h-32 sm:w-32"
+              : "h-16 w-16 sm:h-24 sm:w-24 md:h-28 md:w-28"
+            : "h-28 w-28 sm:h-32 sm:w-32 md:h-36 md:w-36"
         }`}
-        style={{ borderRadius: feature.blob }}
       >
-        {/* Inner glow effect */}
-        <div className="absolute inset-0 rounded-full bg-gradient-to-br from-white/10 to-transparent pointer-events-none" />
         <img
           src={feature.image}
           alt=""
-          className={`object-contain drop-shadow-md ${
+          className={`object-contain drop-shadow-lg w-full h-full ${
             compact
               ? isMobileGrid || isTabletGrid
-                ? "h-12 w-12 sm:h-16 sm:w-16"
+                ? "scale-105"
                 : isDesktop
-                ? "h-14 w-14 sm:h-18 sm:w-18"
-                : "h-10 w-10 sm:h-16 sm:w-16 md:h-17 md:w-17"
-              : "h-20 w-20 sm:h-24 sm:w-24 md:h-28 md:w-28"
+                ? "scale-110"
+                : "scale-100"
+              : "scale-110"
           }`}
           loading="lazy"
           decoding="async"
         />
       </div>
       
+      {/* TITLE ONLY - no number */}
       <h3
-        className={`font-display font-bold leading-snug text-white drop-shadow-sm ${
+        className={`font-display font-bold leading-snug text-white drop-shadow-sm mb-2 ${
           compact
             ? isMobileGrid || isTabletGrid
-              ? "mb-1 text-xs sm:text-sm"
+              ? "text-xs sm:text-sm"
               : isDesktop
-              ? "mb-1 text-sm sm:text-base"
-              : "mb-0.5 text-[11px] sm:text-xs md:text-sm"
-            : "mb-1.5 text-sm sm:text-base md:text-lg"
+              ? "text-sm sm:text-base"
+              : "text-[11px] sm:text-xs md:text-sm"
+            : "text-sm sm:text-base md:text-lg"
         }`}
       >
         {feature.title}
       </h3>
       
+      {/* DESCRIPTION LAST */}
       <p
         className={`leading-relaxed text-[#e0f0d0]/90 ${
           compact

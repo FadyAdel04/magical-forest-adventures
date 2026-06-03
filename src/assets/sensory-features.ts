@@ -1,5 +1,5 @@
 /** Hero sensory feature illustrations (replace icon placeholders) */
-import featureCandle from "./Layer 2.png";
+import featureCandle from "./Candle Illustration.png";
 import featureTouch from "./Layer 3.png";
 import featurePuzzle from "./Layer 4.png";
 import featureWorld from "./Layer 5.png";

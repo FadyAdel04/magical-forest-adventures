@@ -78,7 +78,7 @@ export function Product() {
               src={bee}
               alt="نحلة المغامرة"
               cutout={false}
-              className="w-8/9 drop-shadow-[0_12px_24px_oklch(0.35_0.06_145/0.28)]"
+              className="w-2/3 drop-shadow-[0_12px_24px_oklch(0.35_0.06_145/0.28)]"
             />
           </div>
         </div>
