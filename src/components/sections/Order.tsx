@@ -182,9 +182,8 @@ function SearchableSelect({
             </button>
           ) : (
             <ChevronDown
-              className={`absolute left-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-cream/50 transition-transform duration-200 ${
-                isOpen ? "rotate-180" : ""
-              }`}
+              className={`absolute left-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-cream/50 transition-transform duration-200 ${isOpen ? "rotate-180" : ""
+                }`}
             />
           )}
         </div>
@@ -200,13 +199,12 @@ function SearchableSelect({
                   type="button"
                   onClick={() => handleSelect(option)}
                   onMouseEnter={() => setHighlightedIndex(idx)}
-                  className={`w-full px-3 py-2 text-right text-sm transition-colors ${
-                    highlightedIndex === idx
-                      ? "bg-forest/20 text-forest-deep"
-                      : value === option
+                  className={`w-full px-3 py-2 text-right text-sm transition-colors ${highlightedIndex === idx
+                    ? "bg-forest/20 text-forest-deep"
+                    : value === option
                       ? "bg-forest/10 text-forest-deep font-medium"
                       : "text-gray-700 hover:bg-gray-50"
-                  }`}
+                    }`}
                 >
                   {option}
                   {value === option && (
@@ -273,6 +271,8 @@ export function Order() {
   const discount = showOffer
     ? calcDiscountPercent(catalog.priceBefore, catalog.priceAfter)
     : 0;
+  const savingsPerBox = showOffer ? catalog.priceBefore - catalog.priceAfter : 0;
+  const totalSavings = savingsPerBox * qty;
 
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -385,15 +385,27 @@ export function Order() {
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true }}
         transition={{ duration: 0.6 }}
-        className="pointer-events-none absolute bottom-0 left-0 z-10 w-[min(32vw,120px)] md:hidden"
+        className="pointer-events-none absolute bottom-0 right-62 z-10 md:hidden"
+        style={{ width: 'min(45vw, 200px)', bottom: '-2%' }}
         aria-hidden
       >
-        <div className="animate-float-y ">
-          <ForestCharacter
-            src={char}
-            alt="مستكشف الغابة"
-            className="w-full translate-y-[10%]  drop-shadow-[0_16px_28px_rgba(0,0,0,0.45)]"
-          />
+        <div className="relative">
+          {/* Shadow under character */}
+          <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[80%] h-2 rounded-full bg-black/30 blur-sm"></div>
+
+          <div className="animate-float-y" style={{ marginBottom: '-8%' }}>
+            <ForestCharacter
+              src={char}
+              alt="مستكشف الغابة"
+              className="w-full drop-shadow-[0_20px_30px_rgba(0,0,0,0.5)]"
+              style={{
+                filter: 'brightness(1.05) contrast(1.02)'
+              }}
+            />
+          </div>
+
+          {/* Adventure sparkle effect */}
+          <div className="absolute -top-3 -right-2 w-8 h-8 rounded-full bg-gold/20 blur-md animate-pulse"></div>
         </div>
       </motion.div>
 
@@ -429,15 +441,27 @@ export function Order() {
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div>
                 {showOffer && (
-                  <p className="text-xs text-cream/70 line-through">
-                    <EnNum>{formatPrice(catalog.priceBefore)}</EnNum>
-                    {discount > 0 && (
-                      <>
-                        {" · خصم "}
-                        <EnNum>{formatNumber(discount)}%</EnNum>
-                      </>
-                    )}
-                  </p>
+                  <div className="mb-1.5">
+                    <div className="flex flex-wrap items-center gap-2 mb-1">
+                      <span className="rounded-full bg-gold/25 px-2 py-0.5 text-xs font-bold text-[oklch(0.45_0.1_65)]">
+                        خصم <EnNum>{formatNumber(discount)}%</EnNum>
+                      </span>
+                      <div className="relative inline-flex">
+                        <span className="absolute inset-0 flex items-center">
+                          <span className="h-px w-full bg-cream/50"></span>
+                        </span>
+                        <span className="relative text-sm font-bold text-cream/70">
+                          <EnNum>{formatPrice(catalog.priceBefore)}</EnNum>
+                        </span>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 text-cream/80">
+                      <Sparkles className="h-3 w-3 text-gold" />
+                      <span className="text-xs font-medium">
+                        أنت توفر <EnNum>{savingsPerBox} </EnNum> جنيه لكل صندوق!
+                      </span>
+                    </div>
+                  </div>
                 )}
                 <p className="font-display text-2xl font-black text-cream sm:text-3xl">
                   <EnNum>{formatPrice(unitPrice)}</EnNum>{" "}
@@ -572,49 +596,49 @@ export function Order() {
                       }
                     />
                   </Field>
-<div className="sm:col-span-2">
-  <AnimatePresence mode="wait">
-    {form.gov ? (
-      <motion.div
-        key={form.gov}
-        initial={{ opacity: 0, y: -6 }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: -4 }}
-        transition={{ duration: 0.2 }}
-        className="flex flex-row-reverse items-center justify-between gap-3 rounded-xl border border-white/30 bg-gradient-to-r from-white/15 to-white/10 backdrop-blur-md px-4 py-3 shadow-lg"
-      >
-        <div className="flex flex-row-reverse items-center gap-3 text-cream">
-          <div className="rounded-full bg-white/20 p-2">
-            <Truck className="h-5 w-5 shrink-0 text-cream" />
-          </div>
-          <div className="text-right">
-            <p className="text-sm font-bold text-cream">
-              رسوم الشحن إلى <span className="text-gold">{form.gov}</span>
-            </p>
-            <p className="text-xs text-cream/70">
-              حسب أسعار التوصيل المحددة في إعدادات المتجر
-            </p>
-          </div>
-        </div>
-        <div className="shrink-0 rounded-lg bg-white/20 px-3 py-1.5">
-          <p className="font-display text-xl font-black text-gold">
-            <EnNum>{formatShippingFee(shippingFee)}</EnNum>
-          </p>
-        </div>
-      </motion.div>
-    ) : (
-      <motion.p
-        key="hint"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        className="rounded-lg border border-white/20 bg-white/10 backdrop-blur-sm px-4 py-3 text-center text-sm text-cream/70 shadow-sm"
-      >
-        🚚 اختر المحافظة لعرض رسوم الشحن قبل إتمام الطلب
-      </motion.p>
-    )}
-  </AnimatePresence>
-</div>
+                  <div className="sm:col-span-2">
+                    <AnimatePresence mode="wait">
+                      {form.gov ? (
+                        <motion.div
+                          key={form.gov}
+                          initial={{ opacity: 0, y: -6 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -4 }}
+                          transition={{ duration: 0.2 }}
+                          className="flex flex-row-reverse items-center justify-between gap-3 rounded-xl border border-white/30 bg-gradient-to-r from-white/15 to-white/10 backdrop-blur-md px-4 py-3 shadow-lg"
+                        >
+                          <div className="flex flex-row-reverse items-center gap-3 text-cream">
+                            <div className="rounded-full bg-white/20 p-2">
+                              <Truck className="h-5 w-5 shrink-0 text-cream" />
+                            </div>
+                            <div className="text-right">
+                              <p className="text-sm font-bold text-cream">
+                                رسوم الشحن إلى <span className="text-gold">{form.gov}</span>
+                              </p>
+                              <p className="text-xs text-cream/70">
+                                حسب أسعار التوصيل المحددة في إعدادات المتجر
+                              </p>
+                            </div>
+                          </div>
+                          <div className="shrink-0 rounded-lg bg-white/20 px-3 py-1.5">
+                            <p className="font-display text-xl font-black text-gold">
+                              <EnNum>{formatShippingFee(shippingFee)}</EnNum>
+                            </p>
+                          </div>
+                        </motion.div>
+                      ) : (
+                        <motion.p
+                          key="hint"
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          exit={{ opacity: 0 }}
+                          className="rounded-lg border border-white/20 bg-white/10 backdrop-blur-sm px-4 py-3 text-center text-sm text-cream/70 shadow-sm"
+                        >
+                          🚚 اختر المحافظة لعرض رسوم الشحن قبل إتمام الطلب
+                        </motion.p>
+                      )}
+                    </AnimatePresence>
+                  </div>
                   <Field
                     label="العنوان بالتفصيل"
                     htmlFor="order-address"
@@ -690,6 +714,14 @@ export function Order() {
                 </div>
 
                 <div className="space-y-1.5 rounded-xl border border-white/20 bg-white/10 backdrop-blur-sm px-3 py-2.5 text-sm">
+                  {showOffer && (
+                    <div className="flex justify-between gap-2 border-b border-white/20 pb-1.5 mb-1">
+                      <span className="text-xs text-gold font-bold">الخصم</span>
+                      <span className="text-xs font-bold text-gold">
+                        -<EnNum>{formatPrice(totalSavings)}</EnNum>
+                      </span>
+                    </div>
+                  )}
                   <div className="flex justify-between gap-2">
                     <span className="text-cream/80">
                       المجموع (<EnNum>{formatNumber(qty)}</EnNum>×)
@@ -708,10 +740,21 @@ export function Order() {
                       )}
                     </span>
                   </div>
+                  {showOffer && (
+                    <div className="flex justify-between gap-2 pt-1 text-cream/70 text-xs">
+                      <span>السعر الأصلي للكمية</span>
+                      <EnNum className="line-through">{formatPrice(catalog.priceBefore * qty)}</EnNum>
+                    </div>
+                  )}
                   <div className="flex justify-between gap-2 border-t border-white/20 pt-1.5 font-bold text-cream">
                     <span>الإجمالي</span>
                     <EnNum className="font-display text-lg">{formatPrice(total)}</EnNum>
                   </div>
+                  {showOffer && (
+                    <div className="mt-2 pt-1 text-center text-xs text-gold font-bold bg-gold/10 rounded-lg px-2 py-1.5">
+                      🎉 أنت توفر إجمالي <EnNum>{formatPrice(totalSavings)}</EnNum> مع هذا العرض!
+                    </div>
+                  )}
                 </div>
 
                 <button

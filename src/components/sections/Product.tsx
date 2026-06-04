@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   ChevronLeft,
@@ -9,7 +9,6 @@ import {
   Puzzle,
   type LucideIcon,
 } from "lucide-react";
-import bee from "@/assets/bee.png";
 import { ForestCharacter } from "@/components/shared/ForestCharacter";
 import { Fireflies } from "./Fireflies";
 import { useStore } from "@/hooks/useStore";
@@ -23,6 +22,8 @@ const FEATURE_ICONS: LucideIcon[] = [Book, Headphones, Flame, Puzzle];
 export function Product() {
   const { catalog, isLoading, isReady } = useStore();
   const [index, setIndex] = useState(0);
+  const [isHovering, setIsHovering] = useState(false);
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
   const slides = useMemo(
     () =>
@@ -32,6 +33,23 @@ export function Product() {
       })),
     [catalog.slides],
   );
+
+  // Auto-slide every 3 seconds
+  useEffect(() => {
+    if (slides.length <= 1) return;
+    
+    if (!isHovering) {
+      intervalRef.current = setInterval(() => {
+        setIndex((i) => (i + 1) % slides.length);
+      }, 3000);
+    }
+    
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+      }
+    };
+  }, [slides.length, isHovering]);
 
   if (isLoading && !isReady) {
     return (
@@ -63,26 +81,7 @@ export function Product() {
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_10%_85%,oklch(0.5_0.1_145/0.07)_0%,transparent_45%)]" />
       <Fireflies count={14} />
 
-      {/* Bee - moved to LEFT side */}
-      <motion.div
-        initial={{ opacity: 0, y: -12 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true }}
-        transition={{ duration: 0.6 }}
-        className="pointer-events-none absolute top-2 left-3 z-60 w-[min(26vw,120px)] sm:top-3 sm:left-5 sm:w-[130px] lg:left-8 lg:w-[145px]"
-      >
-        <div className="mx-auto flex flex-col items-center">
-          <div className="h-6 w-0.5 rounded-full bg-linear-to-b from-[oklch(0.55_0.1_130)] to-[oklch(0.42_0.08_55)] opacity-90 sm:h-7" />
-          <div className="flex w-full origin-[top_center] animate-swing flex-col items-center">
-            <ForestCharacter
-              src={bee}
-              alt="نحلة المغامرة"
-              cutout={false}
-              className="w-2/4 drop-shadow-[0_12px_24px_oklch(0.35_0.06_145/0.28)]"
-            />
-          </div>
-        </div>
-      </motion.div>
+
 
       <div className="container relative z-10 mx-auto max-w-6xl px-4">
         <div className="grid items-center gap-5 lg:grid-cols-2 lg:gap-8">
@@ -92,31 +91,33 @@ export function Product() {
             viewport={{ once: true }}
             transition={{ duration: 0.6 }}
             className="relative order-1"
+            onMouseEnter={() => setIsHovering(true)}
+            onMouseLeave={() => setIsHovering(false)}
           >
             {slides.length > 0 && (
               <>
                 <div className="relative">
-                  {/* Left Arrow */}
+                  {/* Left Arrow - only arrow, no circle */}
                   {slides.length > 1 && (
                     <button
                       type="button"
                       aria-label="السابق"
-                      onClick={next}
-                      className="absolute left-2 top-1/2 z-20 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-[#D8D2BF] text-forest shadow-md transition hover:scale-105"
+                      onClick={prev}
+                      className="absolute left-2 top-1/2 z-20 flex h-8 w-8 -translate-y-1/2 items-center justify-center text-forest transition hover:scale-110 hover:text-forest-deep"
                     >
-                      <ChevronLeft className="h-5 w-5" />
+                      <ChevronLeft className="h-6 w-6" strokeWidth={2} />
                     </button>
                   )}
 
-                  {/* Right Arrow */}
+                  {/* Right Arrow - only arrow, no circle */}
                   {slides.length > 1 && (
                     <button
                       type="button"
                       aria-label="التالي"
-                      onClick={prev}
-                      className="absolute right-2 top-1/2 z-20 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-[#D8D2BF] text-forest shadow-md transition hover:scale-105"
+                      onClick={next}
+                      className="absolute right-2 top-1/2 z-20 flex h-8 w-8 -translate-y-1/2 items-center justify-center text-forest transition hover:scale-110 hover:text-forest-deep"
                     >
-                      <ChevronRight className="h-5 w-5" />
+                      <ChevronRight className="h-6 w-6" strokeWidth={2} />
                     </button>
                   )}
 
@@ -145,20 +146,6 @@ export function Product() {
                         className="relative z-10 h-[280px] w-full object-contain sm:h-[500px]"
                       />
                     </AnimatePresence>
-                  </div>
-
-                  {/* Dots */}
-                  <div className="mt-4 flex justify-center gap-2">
-                    {slides.map((_, i) => (
-                      <button
-                        key={i}
-                        type="button"
-                        onClick={() => setIndex(i)}
-                        className={`h-2 rounded-full transition-all duration-300 ${
-                          i === safeIndex ? "w-8 bg-forest" : "w-2 bg-forest/30"
-                        }`}
-                      />
-                    ))}
                   </div>
                 </div>
               </>
@@ -207,7 +194,10 @@ export function Product() {
                     <span className="rounded-full bg-gold/25 px-2 py-0.5 text-xs font-bold text-[oklch(0.45_0.1_65)]">
                       خصم <EnNum>{formatNumber(discount)}%</EnNum>
                     </span>
-                    <span className="text-lg font-bold text-muted-foreground line-through">
+                    <span className="relative text-lg font-bold text-muted-foreground">
+                      <span className="absolute inset-0 flex items-center justify-center">
+                        <span className="h-px w-full bg-muted-foreground/50 rotate-0" />
+                      </span>
                       <EnNum>
                         {formatNumber(catalog.priceBefore)} {catalog.currency}
                       </EnNum>
