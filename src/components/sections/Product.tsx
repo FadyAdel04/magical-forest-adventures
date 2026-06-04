@@ -80,8 +80,6 @@ export function Product() {
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_10%_85%,oklch(0.5_0.1_145/0.07)_0%,transparent_45%)]" />
       <Fireflies count={14} />
 
-
-
       <div className="container relative z-10 mx-auto max-w-6xl px-4">
         <div className="grid items-center gap-5 lg:grid-cols-2 lg:gap-8">
           <motion.div
@@ -173,7 +171,7 @@ export function Product() {
               {catalog.features.map((item, i) => {
                 const Icon = FEATURE_ICONS[i % FEATURE_ICONS.length];
                 return (
-                  <li key={item.id} className="flex items-center gap-2.5">
+                  <li key={item.id} className="flex items-center gap-2.5 min-h-[64px]">
                     <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gradient-forest text-cream shadow-sm">
                       <Icon className="h-4 w-4" />
                     </span>

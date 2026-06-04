@@ -370,12 +370,16 @@ export function Order() {
         whileInView={{ opacity: 1, x: 0 }}
         viewport={{ once: true }}
         transition={{ duration: 0.7 }}
-        className="pointer-events-none absolute bottom-0 left-0 z-10 hidden w-[min(22vw,180px)] md:block lg:w-[200px]"
+        className="pointer-events-none absolute bottom-0 left-0 z-10 hidden md:block"
+        style={{ width: 'min(28vw, 260px)' }}
       >
         <ForestCharacter
           src={char}
           alt="مستكشف الغابة"
           className="w-full translate-y-[8%] drop-shadow-[0_24px_40px_rgba(0,0,0,0.55)]"
+          style={{
+            filter: 'brightness(1.05) contrast(1.02)'
+          }}
         />
       </motion.div>
 
@@ -385,19 +389,19 @@ export function Order() {
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true }}
         transition={{ duration: 0.6 }}
-        className="pointer-events-none absolute bottom-0 right-62 z-10 md:hidden"
-        style={{ width: 'min(45vw, 200px)', bottom: '-2%' }}
+        className="pointer-events-none absolute bottom-0 right-50 z-10 md:hidden"
+        style={{ width: 'min(55vw, 260px)', bottom: '-2%' }}
         aria-hidden
       >
         <div className="relative">
           {/* Shadow under character */}
-          <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[80%] h-2 rounded-full bg-black/30 blur-sm"></div>
+          <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[80%] h-3 rounded-full bg-black/30 blur-md"></div>
 
           <div className="animate-float-y" style={{ marginBottom: '-8%' }}>
             <ForestCharacter
               src={char}
               alt="مستكشف الغابة"
-              className="w-full drop-shadow-[0_20px_30px_rgba(0,0,0,0.5)]"
+              className="w-full drop-shadow-[0_25px_35px_rgba(0,0,0,0.55)]"
               style={{
                 filter: 'brightness(1.05) contrast(1.02)'
               }}
@@ -405,7 +409,8 @@ export function Order() {
           </div>
 
           {/* Adventure sparkle effect */}
-          <div className="absolute -top-3 -right-2 w-8 h-8 rounded-full bg-gold/20 blur-md animate-pulse"></div>
+          <div className="absolute -top-4 -right-2 w-10 h-10 rounded-full bg-gold/20 blur-md animate-pulse"></div>
+          <div className="absolute bottom-10 -left-3 w-6 h-6 rounded-full bg-forest/20 blur-lg"></div>
         </div>
       </motion.div>
 
