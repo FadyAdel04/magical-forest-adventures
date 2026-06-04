@@ -9,7 +9,6 @@ import {
   Puzzle,
   type LucideIcon,
 } from "lucide-react";
-import { ForestCharacter } from "@/components/shared/ForestCharacter";
 import { Fireflies } from "./Fireflies";
 import { useStore } from "@/hooks/useStore";
 import { resolveSlideImage } from "@/lib/imageAssets";
