@@ -1,10 +1,11 @@
 import { useMemo, useState } from "react";
 import { format, parseISO } from "date-fns";
 import { ar } from "date-fns/locale";
-import { Search, Trash2, Eye } from "lucide-react";
+import { Search, Trash2, Eye, RefreshCw, Send } from "lucide-react";
 import { toast } from "sonner";
+import { triggerCreateBostaOrder } from "@/services/bosta";
 import { useStore } from "@/hooks/useStore";
-import { deleteOrder, updateOrderStatus } from "@/lib/store";
+import { deleteOrder, updateOrderStatus, refreshStore } from "@/lib/store";
 import type { OrderStatus } from "@/lib/types";
 import { ORDER_STATUS_LABELS } from "@/lib/types";
 import { AdminPageShell } from "@/admin/components/AdminPageShell";
@@ -71,6 +72,8 @@ export function OrdersPage() {
   const handleStatus = async (id: string, status: OrderStatus) => {
     try {
       await updateOrderStatus(id, status);
+      // Silently refresh from DB to pick up any Flextock status changes
+      void refreshStore({ silent: true });
       toast.success("تم تحديث حالة الطلب");
     } catch {
       toast.error("تعذّر تحديث الحالة");
@@ -84,6 +87,30 @@ export function OrdersPage() {
       toast.success("تم حذف الطلب");
     } catch {
       toast.error("تعذّر حذف الطلب");
+    }
+  };
+
+  const handleSyncBosta = async () => {
+    // Bosta tracking is embedded in the delivery response at creation time.
+    // A manual refresh from DB is all that is needed.
+    toast.info("جاري تحديث بيانات الشحن...");
+    try {
+      await refreshStore({ silent: false });
+      toast.success("تم تحديث حالات الشحن.");
+    } catch {
+      toast.error("تعذّر التحديث. حاول مرة أخرى.");
+    }
+  };
+
+  const handleResendToBosta = async (id: string) => {
+    toast.info("جاري الإرسال إلى Bosta...");
+    try {
+      await triggerCreateBostaOrder(id);
+      await refreshStore({ silent: true });
+      toast.success("تم إرسال الطلب إلى Bosta بنجاح.");
+    } catch (err: any) {
+      const msg = err?.message || "فشل الإرسال";
+      toast.error(`فشل الإرسال: ${msg}`);
     }
   };
 
@@ -104,6 +131,10 @@ export function OrdersPage() {
                 className="pr-10"
               />
             </div>
+            <Button variant="outline" onClick={handleSyncBosta} className="gap-2">
+              <RefreshCw className="h-4 w-4" />
+              مزامنة الشحن
+            </Button>
             <Select value={statusFilter} onValueChange={setStatusFilter}>
               <SelectTrigger className="w-full sm:w-[200px]">
                 <SelectValue placeholder="الحالة" />
@@ -128,7 +159,11 @@ export function OrdersPage() {
               {filtered.map((o) => (
                 <article
                   key={o.id}
-                  className="rounded-xl border bg-card p-4 text-right shadow-sm"
+                  className={`rounded-xl border p-4 text-right shadow-sm bg-card ${
+                    o.status === "shipping_error"
+                      ? "border-rose-200 bg-rose-50/20 dark:border-rose-900/30 dark:bg-rose-950/5"
+                      : ""
+                  }`}
                 >
                   <div className="flex flex-row-reverse items-start justify-between gap-2">
                     <div className="min-w-0">
@@ -139,6 +174,11 @@ export function OrdersPage() {
                       </p>
                     </div>
                     <div className="flex gap-1">
+                      {!o.bostaOrderSent && (
+                        <Button variant="ghost" size="icon" onClick={() => void handleResendToBosta(o.id)} title="إرسال إلى Bosta">
+                          <Send className="h-4 w-4 text-blue-500" />
+                        </Button>
+                      )}
                       <Button variant="ghost" size="icon" onClick={() => setSelectedId(o.id)}>
                         <Eye className="h-4 w-4" />
                       </Button>
@@ -184,6 +224,12 @@ export function OrdersPage() {
                       </dd>
                     </div>
                     <div>
+                      <dt className="text-muted-foreground">شحن Bosta</dt>
+                      <dd className="font-medium text-[10px] uppercase">
+                        {o.bostaStatus || "لم يرسل"}
+                      </dd>
+                    </div>
+                    <div>
                       <dt className="text-muted-foreground">التاريخ</dt>
                       <dd>{format(parseISO(o.createdAt), "d MMM yyyy", { locale: ar })}</dd>
                     </div>
@@ -219,13 +265,18 @@ export function OrdersPage() {
                     <TableHead>الكمية</TableHead>
                     <TableHead>الإجمالي</TableHead>
                     <TableHead>الحالة</TableHead>
+                    <TableHead>حالة Bosta</TableHead>
+                    <TableHead>التتبع</TableHead>
                     <TableHead>التاريخ</TableHead>
                     <TableHead className="text-left">إجراءات</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {filtered.map((o) => (
-                    <TableRow key={o.id}>
+                    <TableRow 
+                      key={o.id}
+                      className={o.status === "shipping_error" ? "bg-rose-50/40 dark:bg-rose-950/10 hover:bg-rose-100/40 dark:hover:bg-rose-950/20" : ""}
+                    >
                       <TableCell className="font-mono text-xs font-bold">{o.orderNumber}</TableCell>
                       <TableCell>{o.customerName}</TableCell>
                       <TableCell dir="ltr" className="text-left text-xs">
@@ -253,11 +304,22 @@ export function OrdersPage() {
                           </SelectContent>
                         </Select>
                       </TableCell>
+                      <TableCell className="text-xs font-semibold uppercase whitespace-nowrap">
+                        {o.bostaStatus || (o.bostaOrderSent ? "مرسل" : "لم يرسل بعد")}
+                      </TableCell>
+                      <TableCell className="text-xs font-mono">
+                        {o.trackingNumber || "-"}
+                      </TableCell>
                       <TableCell className="text-xs text-muted-foreground whitespace-nowrap">
                         {format(parseISO(o.createdAt), "d MMM yyyy", { locale: ar })}
                       </TableCell>
                       <TableCell>
                         <div className="flex gap-1">
+                          {!o.bostaOrderSent && (
+                            <Button variant="ghost" size="icon" onClick={() => void handleResendToBosta(o.id)} title="إرسال إلى Bosta">
+                              <Send className="h-4 w-4 text-blue-500" />
+                            </Button>
+                          )}
                           <Button variant="ghost" size="icon" onClick={() => setSelectedId(o.id)}>
                             <Eye className="h-4 w-4" />
                           </Button>
@@ -343,6 +405,16 @@ export function OrdersPage() {
                   <dd className="font-display text-lg font-black text-forest">
                     {selected.total.toLocaleString("ar-EG")} ج
                   </dd>
+                </div>
+                <div className="flex justify-between gap-4 border-t pt-3">
+                  <dt className="text-muted-foreground">حالة Bosta</dt>
+                  <dd className="font-medium uppercase">
+                    {selected.bostaStatus || "لم يرسل"}
+                  </dd>
+                </div>
+                 <div className="flex justify-between gap-4">
+                  <dt className="text-muted-foreground">رقم التتبع</dt>
+                  <dd className="font-mono">{selected.trackingNumber || "-"}</dd>
                 </div>
                 <div className="flex items-center justify-between gap-4">
                   <dt className="text-muted-foreground">الحالة</dt>

@@ -22,6 +22,7 @@ export type Database = {
           currency: string;
           features: ProductFeature[];
           slides: ProductSlide[];
+          sku_code: string;
           active: boolean;
           updated_at: string;
         };
@@ -37,6 +38,7 @@ export type Database = {
           currency: string;
           features?: ProductFeature[];
           slides?: ProductSlide[];
+          sku_code?: string;
           active?: boolean;
           updated_at?: string;
         };
@@ -73,6 +75,15 @@ export type Database = {
           shipping_fee: number;
           subtotal: number;
           total: number;
+          email: string;
+          city: string;
+          area: string;
+          bosta_district_id: string | null;
+          payment_method: string;
+          bosta_status: string | null;
+          tracking_number: string | null;
+          tracking_url: string | null;
+          bosta_order_sent: boolean;
           status: string;
           created_at: string;
           updated_at: string;
@@ -90,12 +101,58 @@ export type Database = {
           shipping_fee: number;
           subtotal: number;
           total: number;
+          email?: string;
+          city?: string;
+          area?: string;
+          bosta_district_id?: string | null;
+          payment_method?: string;
+          bosta_status?: string | null;
+          tracking_number?: string | null;
+          tracking_url?: string | null;
+          bosta_order_sent?: boolean;
           status?: string;
           created_at?: string;
           updated_at?: string;
         };
         Update: Partial<Database["public"]["Tables"]["orders"]["Insert"]>;
         Relationships: [];
+      };
+      order_items: {
+        Row: {
+          id: string;
+          order_id: string;
+          book_id: string;
+          title: string;
+          sku_code: string;
+          quantity: number;
+          price: number;
+        };
+        Insert: {
+          id?: string;
+          order_id: string;
+          book_id: string;
+          title: string;
+          sku_code: string;
+          quantity: number;
+          price: number;
+        };
+        Update: Partial<Database["public"]["Tables"]["order_items"]["Insert"]>;
+        Relationships: [
+          {
+            foreignKeyName: "order_items_book_id_fkey";
+            columns: ["book_id"];
+            isOneToOne: false;
+            referencedRelation: "products";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "order_items_order_id_fkey";
+            columns: ["order_id"];
+            isOneToOne: false;
+            referencedRelation: "orders";
+            referencedColumns: ["id"];
+          }
+        ];
       };
     };
   };

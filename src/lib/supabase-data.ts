@@ -65,7 +65,24 @@ export async function insertOrderToSupabase(order: OrderRecord): Promise<OrderRe
     .select()
     .single();
   if (error) throw error;
-  return orderRowToRecord(data);
+
+  if (order.items && order.items.length > 0) {
+    const itemsRows = order.items.map((item) => ({
+      id: item.id,
+      order_id: item.orderId,
+      book_id: item.bookId,
+      title: item.title,
+      sku_code: item.skuCode,
+      quantity: item.quantity,
+      price: item.price,
+    }));
+    const { error: itemsError } = await supabase.from("order_items").insert(itemsRows);
+    if (itemsError) throw itemsError;
+  }
+
+  const saved = orderRowToRecord(data);
+  saved.items = order.items;
+  return saved;
 }
 
 export async function updateOrderStatusInSupabase(
@@ -91,13 +108,24 @@ export async function nextOrderNumberFromSupabase(): Promise<string> {
   const year = new Date().getFullYear();
   const prefix = `NSG-${year}-`;
   const supabase = getSupabase();
-  const { count, error } = await supabase
+  
+  const { data, error } = await supabase
     .from("orders")
-    .select("*", { count: "exact", head: true })
-    .like("order_number", `${prefix}%`);
+    .select("order_number")
+    .like("order_number", `${prefix}%`)
+    .order("order_number", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
   if (error) throw error;
-  const seq = (count ?? 0) + 1;
-  return `${prefix}${String(seq).padStart(4, "0")}`;
+  
+  if (data?.order_number) {
+    const lastSeq = parseInt(data.order_number.replace(prefix, ""), 10);
+    const seq = (isNaN(lastSeq) ? 0 : lastSeq) + 1;
+    return `${prefix}${String(seq).padStart(4, "0")}`;
+  }
+  
+  return `${prefix}0001`;
 }
 
 export async function seedAppDataToSupabase(data: AppData): Promise<void> {

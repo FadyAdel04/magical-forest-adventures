@@ -207,6 +207,10 @@ export type CreateOrderInput = {
   address: string;
   notes: string;
   quantity: number;
+  email?: string;
+  city?: string;
+  area?: string;
+  bostaDistrictId?: string;
 };
 
 export async function createOrder(input: CreateOrderInput): Promise<OrderRecord> {
@@ -220,17 +224,35 @@ export async function createOrder(input: CreateOrderInput): Promise<OrderRecord>
     ? await nextOrderNumberFromSupabase()
     : nextOrderNumberLocal();
 
+  const orderId = uid();
   const order: OrderRecord = {
-    id: uid(),
+    id: orderId,
     orderNumber,
     ...input,
+    email: input.email ?? "",
+    city: input.city ?? "",
+    area: input.area ?? "",
+    bostaDistrictId: input.bostaDistrictId ?? null,
     unitPrice,
     shippingFee,
     subtotal,
     total,
+    paymentMethod: "cash_on_delivery",
+    bostaOrderSent: false,
     status: "pending",
     createdAt: t,
     updatedAt: t,
+    items: [
+      {
+        id: uid(),
+        orderId,
+        bookId: cache.catalog.id,
+        title: `${cache.catalog.title} ${cache.catalog.titleHighlight}`.trim(),
+        skuCode: cache.catalog.skuCode,
+        quantity: input.quantity,
+        price: unitPrice,
+      },
+    ],
   };
 
   if (isSupabaseConfigured) {
@@ -241,6 +263,15 @@ export async function createOrder(input: CreateOrderInput): Promise<OrderRecord>
   }
   persistLocal();
   const created = cache.orders[0]!;
+
+  // Bosta auto-trigger — fires immediately after DB insert
+  if (isSupabaseConfigured) {
+    import("@/services/bosta").then((mod) => {
+      mod.triggerCreateBostaOrder(created.id).catch((err) => {
+        console.error("[Bosta] Auto-send failed:", err?.message ?? err);
+      });
+    });
+  }
 
   // Send email alert in production (server-side via Vercel function).
   // Never block order creation if email sending fails.

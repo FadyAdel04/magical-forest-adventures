@@ -15,6 +15,7 @@ import { Fireflies } from "./Fireflies";
 import { useStore } from "@/hooks/useStore";
 import { createOrder } from "@/lib/store";
 import { GOVERNORATES } from "@/lib/governorates";
+import { getBostaCityData } from "@/lib/bosta-cities";
 import { orderLineTotal, calcDiscountPercent } from "@/lib/pricing";
 import { formatNumber, formatPrice } from "@/lib/format";
 import { formatShippingFee, resolveShippingFee } from "@/lib/shipping";
@@ -44,6 +45,7 @@ function SearchableSelect({
   hasError,
   describedBy,
   onBlur,
+  disabled,
 }: {
   id: string;
   value: string;
@@ -54,6 +56,7 @@ function SearchableSelect({
   hasError?: boolean;
   describedBy?: string;
   onBlur?: () => void;
+  disabled?: boolean;
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
@@ -170,11 +173,13 @@ function SearchableSelect({
             aria-invalid={hasError || undefined}
             aria-describedby={describedBy}
             autoComplete="address-level1"
+            disabled={disabled}
             className={cn(inputCls, hasError && inputErrorCls)}
           />
-          {displayValue && !isOpen ? (
+          {displayValue && !isOpen && !disabled ? (
             <button
               type="button"
+              disabled={disabled}
               onClick={handleClear}
               className="absolute left-2 top-1/2 -translate-y-1/2 text-cream/50 hover:text-cream/80"
             >
@@ -234,10 +239,16 @@ export function Order() {
   const [form, setForm] = useState({
     name: "",
     phone: "",
+    email: "",
     gov: "",
+    city: "",
+    area: "",
+    bostaDistrictId: "",
     address: "",
     notes: "",
   });
+  const [bostaDistricts, setBostaDistricts] = useState<{ districtId: string; districtName: string }[]>([]);
+  const [loadingDistricts, setLoadingDistricts] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<OrderFormErrors>({});
   const [touched, setTouched] = useState<Partial<Record<OrderFormField, boolean>>>({});
 
@@ -274,6 +285,53 @@ export function Order() {
   const savingsPerBox = showOffer ? catalog.priceBefore - catalog.priceAfter : 0;
   const totalSavings = savingsPerBox * qty;
 
+  // Fetch Bosta districts when gov changes
+  useEffect(() => {
+    if (!form.gov) {
+      setBostaDistricts([]);
+      setForm((f) => ({ ...f, area: "", bostaDistrictId: "" }));
+      return;
+    }
+    const bostaCity = getBostaCityData(form.gov);
+    if (!bostaCity.id) return;
+    
+    let isMounted = true;
+    setLoadingDistricts(true);
+    
+    fetch(`/api/bosta?action=districts&cityId=${bostaCity.id}`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (!isMounted) return;
+        if (data && data.data && Array.isArray(data.data)) {
+          const seen = new Set<string>();
+          const unique: { districtId: string; districtName: string }[] = [];
+          for (const d of data.data) {
+            const name = (d.districtOtherName || d.districtName || "").trim();
+            if (name && !seen.has(name)) {
+              seen.add(name);
+              unique.push({
+                districtId: d.districtId,
+                districtName: name,
+              });
+            }
+          }
+          setBostaDistricts(unique);
+        } else {
+          setBostaDistricts([]);
+        }
+      })
+      .catch((err) => {
+        console.error("Failed to fetch districts:", err);
+      })
+      .finally(() => {
+        if (isMounted) setLoadingDistricts(false);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [form.gov]);
+
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
     if (!isReady || submitting) return;
@@ -284,7 +342,10 @@ export function Order() {
       setTouched({
         name: true,
         phone: true,
+        email: true,
         gov: true,
+        city: true,
+        area: true,
         address: true,
         notes: true,
       });
@@ -304,7 +365,11 @@ export function Order() {
       const order = await createOrder({
         customerName: form.name.trim(),
         phone: normalizedPhone,
+        email: form.email.trim(),
         governorate: form.gov,
+        city: "",
+        area: form.area.trim(),
+        bostaDistrictId: form.bostaDistrictId,
         address: form.address.trim(),
         notes: form.notes.trim(),
         quantity: qty,
@@ -445,35 +510,45 @@ export function Order() {
           <div className="mb-4 rounded-xl bg-white/15 backdrop-blur-sm border border-white/20 p-3 sm:p-4">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div>
-                {showOffer && (
-                  <div className="mb-1.5">
-                    <div className="flex flex-wrap items-center gap-2 mb-1">
-                      <span className="rounded-full bg-gold/25 px-2 py-0.5 text-xs font-bold text-[oklch(0.45_0.1_65)]">
-                        خصم <EnNum>{formatNumber(discount)}%</EnNum>
-                      </span>
-                      <div className="relative inline-flex">
-                        <span className="absolute inset-0 flex items-center">
-                          <span className="h-px w-full bg-cream/50"></span>
-                        </span>
-                        <span className="relative text-sm font-bold text-cream/70">
-                          <EnNum>{formatPrice(catalog.priceBefore)}</EnNum>
-                        </span>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2 text-cream/80">
-                      <Sparkles className="h-3 w-3 text-gold" />
-                      <span className="text-xs font-medium">
-                        أنت توفر <EnNum>{savingsPerBox} </EnNum> جنيه لكل صندوق!
-                      </span>
-                    </div>
+                {!isReady ? (
+                  /* ─── Loading skeleton — holds space until Supabase responds ─── */
+                  <div className="space-y-2 animate-pulse">
+                    <div className="h-5 w-24 rounded-full bg-white/20" />
+                    <div className="h-8 w-36 rounded-lg bg-white/25" />
                   </div>
+                ) : (
+                  <>
+                    {showOffer && (
+                      <div className="mb-1.5">
+                        <div className="flex flex-wrap items-center gap-2 mb-1">
+                          <span className="rounded-full bg-gold/25 px-2 py-0.5 text-xs font-bold text-[oklch(0.45_0.1_65)]">
+                            خصم <EnNum>{formatNumber(discount)}%</EnNum>
+                          </span>
+                          <div className="relative inline-flex">
+                            <span className="absolute inset-0 flex items-center">
+                              <span className="h-px w-full bg-cream/50"></span>
+                            </span>
+                            <span className="relative text-sm font-bold text-cream/70">
+                              <EnNum>{formatPrice(catalog.priceBefore)}</EnNum>
+                            </span>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2 text-cream/80">
+                          <Sparkles className="h-3 w-3 text-gold" />
+                          <span className="text-xs font-medium">
+                            أنت توفر <EnNum>{savingsPerBox} </EnNum> جنيه لكل صندوق!
+                          </span>
+                        </div>
+                      </div>
+                    )}
+                    <p className="font-display text-2xl font-black text-cream sm:text-3xl">
+                      <EnNum>{formatPrice(unitPrice)}</EnNum>{" "}
+                      <span className="text-sm font-bold text-cream/70">/ للصندوق</span>
+                    </p>
+                  </>
                 )}
-                <p className="font-display text-2xl font-black text-cream sm:text-3xl">
-                  <EnNum>{formatPrice(unitPrice)}</EnNum>{" "}
-                  <span className="text-sm font-bold text-cream/70">/ للصندوق</span>
-                </p>
               </div>
-              {form.gov && (
+              {isReady && form.gov && (
                 <p className="text-xs text-cream/80">
                   شحن إلى {form.gov}:{" "}
                   <span className="font-bold text-cream">
@@ -601,6 +676,34 @@ export function Order() {
                       }
                     />
                   </Field>
+                  {/* City */}
+
+                  {/* Area */}
+                  <Field
+                    label="الحي / المنطقة"
+                    htmlFor="order-area"
+                    required
+                    error={touched.area ? fieldErrors.area : undefined}
+                  >
+                    <SearchableSelect
+                      id="order-area"
+                      required
+                      value={form.area}
+                      onChange={(val) => {
+                        const dist = bostaDistricts.find(d => d.districtName === val);
+                        setForm({ ...form, area: val, bostaDistrictId: dist?.districtId || "" });
+                        clearFieldError("area");
+                      }}
+                      onBlur={() => touchField("area")}
+                      options={bostaDistricts.map(d => d.districtName)}
+                      placeholder={loadingDistricts ? "جاري تحميل الأحياء..." : form.gov ? "اختر الحي / المنطقة" : "اختر المحافظة أولاً"}
+                      hasError={!!(touched.area && fieldErrors.area)}
+                      describedBy={
+                        touched.area && fieldErrors.area ? "order-area-error" : undefined
+                      }
+                      disabled={loadingDistricts || !form.gov || bostaDistricts.length === 0}
+                    />
+                  </Field>
                   <div className="sm:col-span-2">
                     <AnimatePresence mode="wait">
                       {form.gov ? (
@@ -673,6 +776,30 @@ export function Order() {
                   </Field>
                 </div>
 
+                {/* Optional email */}
+                <Field
+                  label="البريد الإلكتروني (اختياري)"
+                  htmlFor="order-email"
+                  error={touched.email ? fieldErrors.email : undefined}
+                >
+                  <input
+                    id="order-email"
+                    name="email"
+                    type="email"
+                    autoComplete="email"
+                    maxLength={120}
+                    placeholder="example@email.com"
+                    dir="ltr"
+                    value={form.email}
+                    onChange={(e) => {
+                      setForm({ ...form, email: e.target.value });
+                      clearFieldError("email");
+                    }}
+                    onBlur={() => touchField("email")}
+                    aria-invalid={!!fieldErrors.email}
+                    className={cn(inputCls, "text-left", touched.email && fieldErrors.email && inputErrorCls)}
+                  />
+                </Field>
                 <Field
                   label="ملاحظات إضافية (اختياري)"
                   htmlFor="order-notes"
@@ -719,46 +846,66 @@ export function Order() {
                 </div>
 
                 <div className="space-y-1.5 rounded-xl border border-white/20 bg-white/10 backdrop-blur-sm px-3 py-2.5 text-sm">
-                  {showOffer && (
-                    <div className="flex justify-between gap-2 border-b border-white/20 pb-1.5 mb-1">
-                      <span className="text-xs text-gold font-bold">الخصم</span>
-                      <span className="text-xs font-bold text-gold">
-                        -<EnNum>{formatPrice(totalSavings)}</EnNum>
-                      </span>
+                  {!isReady ? (
+                    /* Skeleton totals while Supabase loads */
+                    <div className="space-y-2 animate-pulse py-1">
+                      <div className="flex justify-between">
+                        <div className="h-4 w-20 rounded bg-white/20" />
+                        <div className="h-4 w-16 rounded bg-white/20" />
+                      </div>
+                      <div className="flex justify-between">
+                        <div className="h-4 w-16 rounded bg-white/20" />
+                        <div className="h-4 w-20 rounded bg-white/20" />
+                      </div>
+                      <div className="flex justify-between border-t border-white/20 pt-2">
+                        <div className="h-5 w-16 rounded bg-white/25" />
+                        <div className="h-5 w-24 rounded bg-white/30" />
+                      </div>
                     </div>
-                  )}
-                  <div className="flex justify-between gap-2">
-                    <span className="text-cream/80">
-                      المجموع (<EnNum>{formatNumber(qty)}</EnNum>×)
-                    </span>
-                    <EnNum className="font-semibold text-cream">{formatPrice(subtotal)}</EnNum>
-                  </div>
-                  <div className="flex justify-between gap-2">
-                    <span className="text-cream/80">
-                      الشحن{form.gov ? ` — ${form.gov}` : ""}
-                    </span>
-                    <span className={cn("font-semibold", form.gov ? "text-cream" : "text-cream/50")}>
-                      {form.gov ? (
-                        <EnNum>{formatShippingFee(shippingFee)}</EnNum>
-                      ) : (
-                        "يُحسب بعد اختيار المحافظة"
+                  ) : (
+                    <>
+                      {showOffer && (
+                        <div className="flex justify-between gap-2 border-b border-white/20 pb-1.5 mb-1">
+                          <span className="text-xs text-gold font-bold">الخصم</span>
+                          <span className="text-xs font-bold text-gold">
+                            -<EnNum>{formatPrice(totalSavings)}</EnNum>
+                          </span>
+                        </div>
                       )}
-                    </span>
-                  </div>
-                  {showOffer && (
-                    <div className="flex justify-between gap-2 pt-1 text-cream/70 text-xs">
-                      <span>السعر الأصلي للكمية</span>
-                      <EnNum className="line-through">{formatPrice(catalog.priceBefore * qty)}</EnNum>
-                    </div>
-                  )}
-                  <div className="flex justify-between gap-2 border-t border-white/20 pt-1.5 font-bold text-cream">
-                    <span>الإجمالي</span>
-                    <EnNum className="font-display text-lg">{formatPrice(total)}</EnNum>
-                  </div>
-                  {showOffer && (
-                    <div className="mt-2 pt-1 text-center text-xs text-gold font-bold bg-gold/10 rounded-lg px-2 py-1.5">
-                      🎉 أنت توفر إجمالي <EnNum>{formatPrice(totalSavings)}</EnNum> مع هذا العرض!
-                    </div>
+                      <div className="flex justify-between gap-2">
+                        <span className="text-cream/80">
+                          المجموع (<EnNum>{formatNumber(qty)}</EnNum>×)
+                        </span>
+                        <EnNum className="font-semibold text-cream">{formatPrice(subtotal)}</EnNum>
+                      </div>
+                      <div className="flex justify-between gap-2">
+                        <span className="text-cream/80">
+                          الشحن{form.gov ? ` — ${form.gov}` : ""}
+                        </span>
+                        <span className={cn("font-semibold", form.gov ? "text-cream" : "text-cream/50")}>
+                          {form.gov ? (
+                            <EnNum>{formatShippingFee(shippingFee)}</EnNum>
+                          ) : (
+                            "يُحسب بعد اختيار المحافظة"
+                          )}
+                        </span>
+                      </div>
+                      {showOffer && (
+                        <div className="flex justify-between gap-2 pt-1 text-cream/70 text-xs">
+                          <span>السعر الأصلي للكمية</span>
+                          <EnNum className="line-through">{formatPrice(catalog.priceBefore * qty)}</EnNum>
+                        </div>
+                      )}
+                      <div className="flex justify-between gap-2 border-t border-white/20 pt-1.5 font-bold text-cream">
+                        <span>الإجمالي</span>
+                        <EnNum className="font-display text-lg">{formatPrice(total)}</EnNum>
+                      </div>
+                      {showOffer && (
+                        <div className="mt-2 pt-1 text-center text-xs text-gold font-bold bg-gold/10 rounded-lg px-2 py-1.5">
+                          🎉 أنت توفر إجمالي <EnNum>{formatPrice(totalSavings)}</EnNum> مع هذا العرض!
+                        </div>
+                      )}
+                    </>
                   )}
                 </div>
 
@@ -768,7 +915,11 @@ export function Order() {
                   className="mt-1.5 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[#1c290d] py-2.5 text-sm font-bold text-cream shadow-lg transition-all hover:scale-[1.02] hover:shadow-glow disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   <ShoppingBag className="h-4 w-4" />
-                  {submitting ? "جاري إرسال الطلب..." : "اطلب الآن"}
+                  {!isReady || isLoading
+                    ? "جاري تحميل الأسعار..."
+                    : submitting
+                    ? "جاري إرسال الطلب..."
+                    : "اطلب الآن"}
                 </button>
 
               </form>

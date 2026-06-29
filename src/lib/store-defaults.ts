@@ -62,6 +62,7 @@ export function createDefaultCatalog(): ProductCatalog {
         caption: "عطر يفتح أبواب الخيال",
       },
     ],
+    skuCode: "main-product-sku",
     active: true,
     updatedAt: t,
   };
@@ -105,6 +106,7 @@ function migrateLegacyCatalog(raw: Record<string, unknown>): ProductCatalog {
     slides: Array.isArray(raw.slides)
       ? (raw.slides as Record<string, unknown>[]).map(migrateLegacySlide)
       : [],
+    skuCode: (raw.skuCode as string) ?? "main-product-sku",
     active: raw.active !== false,
     updatedAt: (raw.updatedAt as string) ?? now(),
   };
@@ -129,6 +131,14 @@ function migrateLegacyOrder(o: Record<string, unknown>): OrderRecord {
     shippingFee,
     subtotal,
     total,
+    email: (o.email as string) ?? "",
+    city: (o.city as string) ?? "",
+    area: (o.area as string) ?? "",
+    paymentMethod: (o.paymentMethod as string) ?? "cash_on_delivery",
+    flextockStatus: (o.flextockStatus as string | null) ?? null,
+    trackingNumber: (o.trackingNumber as string | null) ?? null,
+    trackingUrl: (o.trackingUrl as string | null) ?? null,
+    flextockOrderSent: Boolean(o.flextockOrderSent),
     status: o.status as OrderRecord["status"],
     createdAt: o.createdAt as string,
     updatedAt: o.updatedAt as string,

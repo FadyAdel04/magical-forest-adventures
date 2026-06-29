@@ -17,6 +17,7 @@ CREATE TABLE IF NOT EXISTS public.products (
   currency TEXT NOT NULL DEFAULT 'جنيه',
   features JSONB NOT NULL DEFAULT '[]'::jsonb,
   slides JSONB NOT NULL DEFAULT '[]'::jsonb,
+  sku_code TEXT UNIQUE DEFAULT 'main-product-sku',
   active BOOLEAN NOT NULL DEFAULT true,
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
@@ -43,12 +44,33 @@ CREATE TABLE IF NOT EXISTS public.orders (
   shipping_fee NUMERIC(12, 2) NOT NULL DEFAULT 0,
   subtotal NUMERIC(12, 2) NOT NULL,
   total NUMERIC(12, 2) NOT NULL,
+  email TEXT NOT NULL DEFAULT '',
+  city TEXT NOT NULL DEFAULT '',
+  area TEXT NOT NULL DEFAULT '',
+  payment_method TEXT NOT NULL DEFAULT 'cash_on_delivery',
+  flextock_status TEXT,
+  tracking_number TEXT,
+  tracking_url TEXT,
+  flextock_order_sent BOOLEAN NOT NULL DEFAULT false,
   status TEXT NOT NULL DEFAULT 'pending' CHECK (
-    status IN ('pending', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled')
+    status IN ('pending', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled', 'shipping_error')
   ),
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+
+-- ─── Order Items ───
+CREATE TABLE IF NOT EXISTS public.order_items (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  order_id UUID NOT NULL REFERENCES public.orders(id) ON DELETE CASCADE,
+  book_id TEXT NOT NULL REFERENCES public.products(id),
+  title TEXT NOT NULL,
+  sku_code TEXT NOT NULL,
+  quantity INTEGER NOT NULL CHECK (quantity > 0),
+  price NUMERIC(12, 2) NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS order_items_order_id_idx ON public.order_items (order_id);
 
 CREATE INDEX IF NOT EXISTS orders_created_at_idx ON public.orders (created_at DESC);
 CREATE INDEX IF NOT EXISTS orders_status_idx ON public.orders (status);
@@ -117,5 +139,11 @@ CREATE POLICY "orders_update" ON public.orders FOR UPDATE USING (true) WITH CHEC
 
 DROP POLICY IF EXISTS "orders_delete" ON public.orders;
 CREATE POLICY "orders_delete" ON public.orders FOR DELETE USING (true);
+
+DROP POLICY IF EXISTS "order_items_select" ON public.order_items;
+CREATE POLICY "order_items_select" ON public.order_items FOR SELECT USING (true);
+
+DROP POLICY IF EXISTS "order_items_insert" ON public.order_items;
+CREATE POLICY "order_items_insert" ON public.order_items FOR INSERT WITH CHECK (true);
 
 -- Optional: Dashboard → Database → Publications → supabase_realtime → add these tables

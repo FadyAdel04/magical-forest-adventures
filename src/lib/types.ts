@@ -22,6 +22,7 @@ export type ProductCatalog = {
   currency: string;
   features: ProductFeature[];
   slides: ProductSlide[];
+  skuCode: string;
   active: boolean;
   updatedAt: string;
 };
@@ -42,7 +43,18 @@ export type OrderStatus =
   | "processing"
   | "shipped"
   | "delivered"
-  | "cancelled";
+  | "cancelled"
+  | "shipping_error";
+
+export type OrderItemRecord = {
+  id: string;
+  orderId: string;
+  bookId: string;
+  title: string;
+  skuCode: string;
+  quantity: number;
+  price: number;
+};
 
 export type OrderRecord = {
   id: string;
@@ -57,9 +69,19 @@ export type OrderRecord = {
   shippingFee: number;
   subtotal: number;
   total: number;
+  email: string;
+  city: string;
+  area: string;
+  bostaDistrictId?: string | null;
+  paymentMethod: string;
+  bostaStatus?: string | null;
+  trackingNumber?: string | null;
+  trackingUrl?: string | null;
+  bostaOrderSent: boolean;
   status: OrderStatus;
   createdAt: string;
   updatedAt: string;
+  items?: OrderItemRecord[];
 };
 
 export type AppData = {
@@ -75,4 +97,5 @@ export const ORDER_STATUS_LABELS: Record<OrderStatus, string> = {
   shipped: "تم الشحن",
   delivered: "تم التسليم",
   cancelled: "ملغي",
+  shipping_error: "خطأ في الشحن",
 };
