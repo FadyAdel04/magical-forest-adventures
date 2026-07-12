@@ -7,6 +7,11 @@ import { Hero } from "@/components/sections/Hero";
 const Product = lazy(() =>
   import("@/components/sections/Product").then((m) => ({ default: m.Product })),
 );
+const UpcomingProducts = lazy(() =>
+  import("@/components/sections/UpcomingProducts").then((m) => ({
+    default: m.UpcomingProducts,
+  })),
+);
 const Order = lazy(() =>
   import("@/components/sections/Order").then((m) => ({ default: m.Order })),
 );
@@ -22,6 +27,9 @@ export function LandingPage() {
       <Hero />
       <Suspense fallback={<SectionFallback />}>
         <Product />
+      </Suspense>
+      <Suspense fallback={<SectionFallback />}>
+        <UpcomingProducts />
       </Suspense>
       <Suspense fallback={<SectionFallback />}>
         <Order />
