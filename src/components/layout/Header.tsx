@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { Menu, X, ShoppingBag } from "lucide-react";
-import logo from "@/assets/logo.jpg";
+import logo from "@/assets/hero.png";
 
 const links = [
   { href: "#home", label: "الرئيسية" },
