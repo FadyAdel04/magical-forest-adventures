@@ -7,6 +7,8 @@ import { ForestCharacter } from "@/components/shared/ForestCharacter";
 import { Fireflies } from "./Fireflies";
 import { SensoryFeatures } from "./SensoryFeatures";
 
+import { trackAddToCart } from "@/lib/meta-pixel";
+
 export function Hero() {
   const scrollTo = (id: string) => {
     document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
@@ -124,7 +126,10 @@ export function Hero() {
 
               <button
                 type="button"
-                onClick={() => scrollTo("order")}
+                onClick={() => {
+                  trackAddToCart();
+                  scrollTo("order");
+                }}
                 className="relative inline-flex items-center gap-1.5 rounded-full border border-white/30 bg-gradient-to-b from-white/20 to-white/5 px-4 py-2 text-xs font-semibold text-cream shadow-[0_5px_0_rgba(0,0,0,0.2)] backdrop-blur-sm transition-all duration-150 active:translate-y-[2px] active:shadow-[0_2px_0_rgba(0,0,0,0.2)] hover:bg-white/20 sm:gap-2 sm:px-6 sm:py-2.5 sm:text-sm"
               >
                 اطلب الآن

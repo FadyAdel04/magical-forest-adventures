@@ -31,6 +31,12 @@ import { formatPhoneInput } from "@/lib/phone-validation";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import char from "@/assets/Layer 7.png";
+import {
+  trackInitiateCheckout,
+  trackPurchase,
+  trackLead,
+  trackContact,
+} from "@/lib/meta-pixel";
 
 const governorates = [...GOVERNORATES];
 
@@ -332,9 +338,23 @@ export function Order() {
     };
   }, [form.gov]);
 
+  const checkoutInitiatedRef = useRef(false);
+  const handleInitiateCheckout = () => {
+    if (!checkoutInitiatedRef.current) {
+      checkoutInitiatedRef.current = true;
+      trackInitiateCheckout({
+        value: total,
+        currency: catalog.currency || "EGP",
+        num_items: qty,
+      });
+    }
+  };
+
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
     if (!isReady || submitting) return;
+
+    handleInitiateCheckout();
 
     const { errors, normalizedPhone } = validateOrderForm(form);
     if (Object.keys(errors).length > 0 || !normalizedPhone) {
@@ -378,6 +398,21 @@ export function Order() {
       setSubmittedPhone(normalizedPhone);
       setSubmitted(true);
       setFieldErrors({});
+
+      trackPurchase({
+        value: total,
+        currency: catalog.currency || "EGP",
+        content_name: "مغامرات نسيج في الغابة السحرية",
+        content_ids: ["nasseg-forest-box"],
+        num_items: qty,
+        order_id: order.orderNumber,
+      });
+      trackLead({
+        content_name: "طلب جديد - مغامرات نسيج",
+        value: total,
+        currency: catalog.currency || "EGP",
+      });
+
       toast.success("تم استلام طلبك بنجاح");
     } catch {
       toast.error("تعذّر إرسال الطلب. حاول مرة أخرى.");
@@ -585,6 +620,13 @@ export function Order() {
                     href={whatsappHref}
                     target="_blank"
                     rel="noopener noreferrer"
+                    onClick={() => {
+                      trackContact({
+                        content_name: `تأكيد طلب ${orderNumber} عبر واتساب`,
+                        method: "WhatsApp",
+                        value: total,
+                      });
+                    }}
                     className="mt-4 inline-flex w-full max-w-sm items-center justify-center gap-2.5 rounded-full bg-gradient-forest px-5 py-3 text-sm font-bold text-cream shadow-[0_8px_24px_rgba(0,0,0,0.25)] transition hover:scale-[1.02] sm:w-auto sm:px-6"
                   >
                     <WhatsAppIcon className="h-5 w-5 shrink-0" />

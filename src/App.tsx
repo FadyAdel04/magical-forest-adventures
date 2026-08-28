@@ -4,6 +4,8 @@ import { Toaster } from "@/components/ui/sonner";
 import { StoreProvider } from "@/providers/StoreProvider";
 import { LandingPage } from "@/pages/LandingPage";
 
+import { MetaPixelTracker } from "@/hooks/useMetaPixel";
+
 // ── Admin routes — lazy-loaded so they are NEVER shipped to landing page visitors ──
 const AdminLayout = lazy(() =>
   import("@/admin/layout/AdminLayout").then((m) => ({ default: m.AdminLayout })),
@@ -48,6 +50,7 @@ export default function App() {
   return (
     <StoreProvider>
       <BrowserRouter>
+        <MetaPixelTracker />
         <Routes>
           <Route path="/" element={<LandingPage />} />
           <Route

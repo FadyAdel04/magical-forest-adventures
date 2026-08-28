@@ -16,6 +16,8 @@ import { calcDiscountPercent } from "@/lib/pricing";
 import { formatNumber } from "@/lib/format";
 import { EnNum } from "@/components/shared/EnNum";
 
+import { trackAddToCart } from "@/lib/meta-pixel";
+
 const FEATURE_ICONS: LucideIcon[] = [Book, Headphones, Flame, Puzzle];
 
 export function Product() {
@@ -70,6 +72,7 @@ export function Product() {
   const prev = () => setIndex((i) => (i - 1 + slides.length) % slides.length);
 
   const scrollToOrder = () => {
+    trackAddToCart();
     document.getElementById("order")?.scrollIntoView({ behavior: "smooth" });
   };
 
