@@ -18,6 +18,7 @@ import {
 } from "./store-defaults";
 import type {
   AppData,
+  CartItem,
   OrderRecord,
   OrderStatus,
   ProductCatalog,
@@ -72,6 +73,7 @@ function buildSnapshot(): StoreSnapshot {
     catalog: cache.catalog,
     orders: cache.orders,
     shipping: cache.shipping,
+    cart: cache.cart,
     isLoading,
     isReady,
     error,
@@ -367,4 +369,113 @@ export async function deleteOrder(id: string): Promise<void> {
   }
   cache = { ...cache, orders: cache.orders.filter((o) => o.id !== id) };
   persistLocal();
+}
+
+
+export function addToCart(productId: string, quantity: number = 1): void {
+  const product = cache.catalog;
+  if (!product.active) return;
+
+  if (!cache.cart) {
+    cache.cart = { items: [], updatedAt: new Date().toISOString() };
+  }
+
+  // Check if product already in cart
+  const existingItemIndex = cache.cart.items.findIndex(
+    (item) => item.productId === productId
+  );
+
+  let updatedItems: CartItem[];
+  if (existingItemIndex >= 0) {
+    // Update existing item
+    updatedItems = cache.cart.items.map((item, index) =>
+      index === existingItemIndex
+        ? {
+            ...item,
+            quantity: item.quantity + quantity,
+            updatedAt: new Date().toISOString(),
+          }
+        : item
+    );
+  } else {
+    // Add new item
+    const newItem: CartItem = {
+      id: crypto.randomUUID(),
+      productId: product.id,
+      title: `${product.title} ${product.titleHighlight}`.trim(),
+      skuCode: product.skuCode,
+      quantity,
+      unitPrice: product.priceAfter,
+      imageUrl: product.slides[0]?.imageUrl, // First slide image
+    };
+    updatedItems = [...cache.cart.items, newItem];
+  }
+
+  cache = {
+    ...cache,
+    cart: {
+      items: updatedItems,
+      updatedAt: new Date().toISOString(),
+    },
+  };
+  persistLocal();
+}
+
+export function removeFromCart(productId: string): void {
+  if (!cache.cart) return;
+
+  cache = {
+    ...cache,
+    cart: {
+      items: cache.cart.items.filter((item) => item.productId !== productId),
+      updatedAt: new Date().toISOString(),
+    },
+  };
+  persistLocal();
+}
+
+export function updateCartQuantity(productId: string, quantity: number): void {
+  if (quantity <= 0) {
+    removeFromCart(productId);
+    return;
+  }
+
+  if (!cache.cart) return;
+
+  cache = {
+    ...cache,
+    cart: {
+      items: cache.cart.items.map((item) =>
+        item.productId === productId
+          ? { ...item, quantity, updatedAt: new Date().toISOString() }
+          : item
+      ),
+      updatedAt: new Date().toISOString(),
+    },
+  };
+  persistLocal();
+}
+
+export function clearCart(): void {
+  cache = {
+    ...cache,
+    cart: {
+      items: [],
+      updatedAt: new Date().toISOString(),
+    },
+  };
+  persistLocal();
+}
+
+export function getCartItemCount(): number {
+  if (!cache.cart) return 0;
+  return cache.cart.items.reduce((total, item) => total + item.quantity, 0);
+}
+
+export function getCartTotal(): number {
+  if (!cache.cart) return 0;
+  return cache.cart.items.reduce(
+    (total, item) => total + item.quantity * item.unitPrice,
+    0
+  );
 }

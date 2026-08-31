@@ -1,6 +1,6 @@
 import { GOVERNORATES } from "./governorates";
 import { resolveLegacyImage, type ImageAssetKey } from "./imageAssets";
-import type { AppData, OrderRecord, ProductCatalog, ShippingSettings } from "./types";
+import type { AppData, OrderRecord, ProductCatalog, ShippingSettings, CartItem } from "./types";
 
 function uid() {
   return crypto.randomUUID();
@@ -14,6 +14,13 @@ export function createDefaultShipping(): ShippingSettings {
   return {
     defaultFee: 0,
     governorateFees: GOVERNORATES.map((governorate) => ({ governorate, fee: 0 })),
+  };
+}
+
+export function createDefaultCart(): Cart {
+  return {
+    items: [],
+    updatedAt: new Date().toISOString(),
   };
 }
 
@@ -73,6 +80,7 @@ export function createDefaultData(): AppData {
     catalog: createDefaultCatalog(),
     orders: [],
     shipping: createDefaultShipping(),
+    cart: createDefaultCart(),
   };
 }
 
@@ -158,7 +166,23 @@ function normalizeData(parsed: Record<string, unknown>): AppData {
       shipping.defaultFee = s.defaultFee ?? 0;
     }
   }
-  return { catalog, orders, shipping };
+  const cart = parsed.cart && typeof parsed.cart === "object" && "items" in parsed.cart
+    ? {
+        items: Array.isArray((parsed.cart as any).items)
+          ? ((parsed.cart as any).items as CartItem[]).map((item: Record<string, unknown>) => ({
+              id: item.id ?? crypto.randomUUID(),
+              productId: item.productId ?? "",
+              title: item.title ?? "",
+              skuCode: item.skuCode ?? "",
+              quantity: Number(item.quantity ?? 0),
+              unitPrice: Number(item.unitPrice ?? 0),
+              imageUrl: item.imageUrl as string | undefined,
+            }))
+          : [],
+        updatedAt: (parsed.cart as any).updatedAt ?? new Date().toISOString(),
+      }
+    : createDefaultCart();
+  return { catalog, orders, shipping, cart };
 }
 
 /** Read legacy localStorage backup (used for one-time migration to Supabase). */

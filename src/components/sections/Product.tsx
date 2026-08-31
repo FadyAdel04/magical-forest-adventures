@@ -15,15 +15,17 @@ import { resolveSlideImage } from "@/lib/imageAssets";
 import { calcDiscountPercent } from "@/lib/pricing";
 import { formatNumber } from "@/lib/format";
 import { EnNum } from "@/components/shared/EnNum";
+import { CartDrawer } from "@/components/shared/CartDrawer";
 
 import { trackAddToCart, getPixelProductParams } from "@/lib/meta-pixel";
 
 const FEATURE_ICONS: LucideIcon[] = [Book, Headphones, Flame, Puzzle];
 
 export function Product() {
-  const { catalog, isLoading, isReady } = useStore();
+  const { catalog, isLoading, isReady, addToCart } = useStore();
   const [index, setIndex] = useState(0);
   const [isHovering, setIsHovering] = useState(false);
+  const [isCartOpen, setIsCartOpen] = useState(false);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
   const slides = useMemo(
@@ -36,6 +38,12 @@ export function Product() {
   );
 
   // Auto-slide every 3 seconds
+  useEffect(() => {
+    const handleOpenCart = () => setIsCartOpen(true);
+    window.addEventListener('openCart', handleOpenCart);
+    return () => window.removeEventListener('openCart', handleOpenCart);
+  }, []);
+
   useEffect(() => {
     if (slides.length <= 1) return;
     
@@ -71,14 +79,16 @@ export function Product() {
   const next = () => setIndex((i) => (i + 1) % slides.length);
   const prev = () => setIndex((i) => (i - 1 + slides.length) % slides.length);
 
-  const scrollToOrder = () => {
+  const handleAddToCart = () => {
+    addToCart(catalog.id, 1); // Add 1 item to cart
     const params = getPixelProductParams(catalog);
     if (params) trackAddToCart(params);
-    document.getElementById("order")?.scrollIntoView({ behavior: "smooth" });
+    setIsCartOpen(true);
   };
 
   return (
-    <section id="product" className="relative scroll-mt-20 overflow-x-hidden py-6 sm:py-10">
+    <>
+      <section id="product" className="relative scroll-mt-20 overflow-x-hidden py-6 sm:py-10">
       <div className="product-paper-bg absolute inset-0" />
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_15%,oklch(0.75_0.14_85/0.14)_0%,transparent_40%)]" />
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_10%_85%,oklch(0.5_0.1_145/0.07)_0%,transparent_45%)]" />
@@ -213,15 +223,19 @@ export function Product() {
               </div>
               <button
                 type="button"
-                onClick={scrollToOrder}
+                onClick={handleAddToCart}
                 className="inline-flex items-center justify-center rounded-full bg-gradient-forest px-6 py-2.5 text-sm font-bold text-cream shadow-magic transition hover:scale-[1.02] hover:shadow-glow"
               >
-                اطلب الآن
+                أضف إلى العربة
               </button>
             </div>
           </motion.div>
         </div>
       </div>
-    </section>
+      </section>
+      {isCartOpen && (
+        <CartDrawer isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
+      )}
+    </>
   );
 }

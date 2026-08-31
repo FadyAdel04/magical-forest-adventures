@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
-import { Menu, X, ShoppingBag } from "lucide-react";
+import { Menu, X, ShoppingBag, ShoppingCart } from "lucide-react";
+import { useStore } from "@/hooks/useStore";
 import logo from "@/assets/hero.png";
 
 const links = [
@@ -41,6 +42,10 @@ export function Header() {
   const [active, setActive] = useState<ActiveHref>("#home");
   const [paperFromScroll, setPaperFromScroll] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+  const { getCartItemCount } = useStore();
+  const cartItemCount = getCartItemCount();
+
+  const openCart = () => window.dispatchEvent(new Event('openCart'));
 
   const updateActiveSection = useCallback(() => {
     const home = document.getElementById("home");
@@ -153,6 +158,20 @@ export function Header() {
         </nav>
 
         <div className="absolute top-1/2 right-4 flex -translate-y-1/2 items-center gap-2 md:static md:translate-y-0 md:justify-self-end">
+          <button
+            type="button"
+            onClick={openCart}
+            className={`relative flex items-center justify-center p-2 rounded-full transition hover:bg-white/10 ${theme === "paper" ? "text-forest-deep" : "text-cream"}`}
+            aria-label="عربة التسوق"
+          >
+            <ShoppingCart className="h-5 w-5 sm:h-6 sm:w-6" />
+            {cartItemCount > 0 && (
+              <span className="absolute 1 -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-gold text-[11px] font-bold text-forest-deep">
+                {cartItemCount}
+              </span>
+            )}
+          </button>
+
           <button
             type="button"
             onClick={() => go("#order")}

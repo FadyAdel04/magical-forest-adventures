@@ -237,8 +237,18 @@ function SearchableSelect({
 }
 
 export function Order() {
-  const { catalog, shipping, isLoading, isReady } = useStore();
-  const [qty, setQty] = useState(1);
+  const { catalog, shipping, isLoading, isReady, cart, updateCartQuantity, addToCart } = useStore();
+  
+  const cartItem = cart?.items?.find((item) => item.productId === catalog.id);
+  const qty = cartItem ? cartItem.quantity : 1;
+
+  const setQty = (newQty: number) => {
+    if (cartItem) {
+      updateCartQuantity(catalog.id, newQty);
+    } else {
+      addToCart(catalog.id, newQty);
+    }
+  };
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [orderNumber, setOrderNumber] = useState("");
@@ -572,21 +582,25 @@ export function Order() {
                               <span className="h-px w-full bg-cream/50"></span>
                             </span>
                             <span className="relative text-sm font-bold text-cream/70">
-                              <EnNum>{formatPrice(catalog.priceBefore)}</EnNum>
+                              <EnNum>{formatPrice(catalog.priceBefore * qty)}</EnNum>
                             </span>
                           </div>
                         </div>
                         <div className="flex items-center gap-2 text-cream/80">
                           <Sparkles className="h-3 w-3 text-gold" />
                           <span className="text-xs font-medium">
-                            أنت توفر <EnNum>{savingsPerBox} </EnNum> جنيه لكل صندوق!
+                            أنت توفر <EnNum>{totalSavings} </EnNum> جنيه!
                           </span>
                         </div>
                       </div>
                     )}
                     <p className="font-display text-2xl font-black text-cream sm:text-3xl">
-                      <EnNum>{formatPrice(unitPrice)}</EnNum>{" "}
-                      <span className="text-sm font-bold text-cream/70">/ للصندوق</span>
+                      <EnNum>{formatPrice(unitPrice * qty)}</EnNum>
+                      {qty > 1 && (
+                        <span className="mr-2 text-sm font-bold text-cream/70">
+                          (لـ <EnNum>{qty}</EnNum> منتجات)
+                        </span>
+                      )}
                     </p>
                   </>
                 )}

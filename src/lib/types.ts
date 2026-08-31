@@ -84,10 +84,26 @@ export type OrderRecord = {
   items?: OrderItemRecord[];
 };
 
+export type CartItem = {
+  id: string;
+  productId: string;
+  title: string;
+  skuCode: string;
+  quantity: number;
+  unitPrice: number;
+  imageUrl?: string;
+};
+
+export type Cart = {
+  items: CartItem[];
+  updatedAt: string;
+};
+
 export type AppData = {
   catalog: ProductCatalog;
   orders: OrderRecord[];
   shipping: ShippingSettings;
+  cart: Cart;
 };
 
 export const ORDER_STATUS_LABELS: Record<OrderStatus, string> = {
