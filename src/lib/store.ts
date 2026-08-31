@@ -111,7 +111,15 @@ async function pullFromSupabase() {
     await seedAppDataToSupabase(local);
     cache = await fetchAppDataFromSupabase();
   } else {
-    cache = remote;
+    const remoteTime = new Date(remote.catalog.updatedAt).getTime();
+    const localTime = local ? new Date(local.catalog.updatedAt).getTime() : 0;
+
+    if (!isNaN(localTime) && !isNaN(remoteTime) && localTime > remoteTime && local) {
+      await upsertCatalogToSupabase(local.catalog);
+      cache = { ...remote, catalog: local.catalog };
+    } else {
+      cache = remote;
+    }
   }
   saveLocalStorageBackup(cache);
 }
@@ -166,7 +174,20 @@ export async function refreshStore(options?: { silent?: boolean }): Promise<void
     notify();
   }
   try {
-    cache = await fetchAppDataFromSupabase();
+    const remote = await fetchAppDataFromSupabase();
+
+    const remoteTime = new Date(remote.catalog.updatedAt).getTime();
+    const localTime = new Date(cache.catalog.updatedAt).getTime();
+
+    const catalogToUse =
+      isNaN(remoteTime) || isNaN(localTime) || remoteTime >= localTime
+        ? remote.catalog
+        : cache.catalog;
+
+    cache = {
+      ...remote,
+      catalog: catalogToUse,
+    };
     saveLocalStorageBackup(cache);
     error = null;
   } catch (e) {
@@ -184,12 +205,17 @@ export function getShippingFee(governorate: string): number {
 }
 
 export async function replaceCatalog(catalog: ProductCatalog): Promise<void> {
-  const updated = { ...catalog, updatedAt: now() };
+  const updated = {
+    ...catalog,
+    id: catalog.id || "main-product",
+    updatedAt: now(),
+  };
+  cache = { ...cache, catalog: updated };
+  persistLocal();
+
   if (isSupabaseConfigured) {
     await upsertCatalogToSupabase(updated);
   }
-  cache = { ...cache, catalog: updated };
-  persistLocal();
 }
 
 export async function replaceShipping(shipping: ShippingSettings): Promise<void> {

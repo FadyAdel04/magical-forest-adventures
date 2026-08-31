@@ -17,7 +17,12 @@ export async function fetchAppDataFromSupabase(): Promise<AppData> {
   const supabase = getSupabase();
 
   const [productRes, shippingRes, ordersRes] = await Promise.all([
-    supabase.from("products").select("*").eq("id", PRODUCT_ID).maybeSingle(),
+    supabase
+      .from("products")
+      .select("*")
+      .order("updated_at", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
     supabase.from("shipping_settings").select("*").eq("id", SHIPPING_ID).maybeSingle(),
     supabase.from("orders").select("*").order("created_at", { ascending: false }),
   ]);
@@ -45,7 +50,11 @@ export async function fetchAppDataFromSupabase(): Promise<AppData> {
 
 export async function upsertCatalogToSupabase(catalog: ProductCatalog): Promise<void> {
   const supabase = getSupabase();
-  const row = catalogToProductRow(catalog);
+  const normalizedCatalog = {
+    ...catalog,
+    id: catalog.id || PRODUCT_ID,
+  };
+  const row = catalogToProductRow(normalizedCatalog);
   const { error } = await supabase.from("products").upsert(row, { onConflict: "id" });
   if (error) throw error;
 }
@@ -129,8 +138,27 @@ export async function nextOrderNumberFromSupabase(): Promise<string> {
 }
 
 export async function seedAppDataToSupabase(data: AppData): Promise<void> {
-  await upsertCatalogToSupabase(data.catalog);
-  await upsertShippingToSupabase(data.shipping);
+  const supabase = getSupabase();
+  const { data: existingCatalog } = await supabase
+    .from("products")
+    .select("id")
+    .limit(1)
+    .maybeSingle();
+
+  if (!existingCatalog) {
+    await upsertCatalogToSupabase(data.catalog);
+  }
+
+  const { data: existingShipping } = await supabase
+    .from("shipping_settings")
+    .select("id")
+    .limit(1)
+    .maybeSingle();
+
+  if (!existingShipping) {
+    await upsertShippingToSupabase(data.shipping);
+  }
+
   for (const order of [...data.orders].reverse()) {
     await insertOrderToSupabase(order);
   }
