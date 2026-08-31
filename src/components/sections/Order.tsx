@@ -36,6 +36,7 @@ import {
   trackPurchase,
   trackLead,
   trackContact,
+  getPixelProductParams,
 } from "@/lib/meta-pixel";
 
 const governorates = [...GOVERNORATES];
@@ -342,11 +343,10 @@ export function Order() {
   const handleInitiateCheckout = () => {
     if (!checkoutInitiatedRef.current) {
       checkoutInitiatedRef.current = true;
-      trackInitiateCheckout({
-        value: total,
-        currency: catalog.currency || "EGP",
-        num_items: qty,
-      });
+      const params = getPixelProductParams(catalog, qty, total);
+      if (params) {
+        trackInitiateCheckout(params);
+      }
     }
   };
 
@@ -399,18 +399,22 @@ export function Order() {
       setSubmitted(true);
       setFieldErrors({});
 
+      const dynamicTitle = `${catalog.title ?? ""} ${catalog.titleHighlight ?? ""}`.trim() || "مغامرات نسيج في الغابة السحرية";
+      const skuId = catalog.skuCode || catalog.id || "main-product";
+      const currency = catalog.currency === "جنيه" ? "EGP" : catalog.currency || "EGP";
+
       trackPurchase({
         value: total,
-        currency: catalog.currency || "EGP",
-        content_name: "مغامرات نسيج في الغابة السحرية",
-        content_ids: ["nasseg-forest-box"],
+        currency: currency,
+        content_name: dynamicTitle,
+        content_ids: [skuId],
         num_items: qty,
         order_id: order.orderNumber,
       });
       trackLead({
-        content_name: "طلب جديد - مغامرات نسيج",
+        content_name: `طلب جديد - ${dynamicTitle}`,
         value: total,
-        currency: catalog.currency || "EGP",
+        currency: currency,
       });
 
       toast.success("تم استلام طلبك بنجاح");
@@ -423,6 +427,7 @@ export function Order() {
 
   const whatsappHref = useMemo(() => {
     if (!submitted || !orderNumber) return null;
+    const dynamicTitle = `${catalog.title ?? ""} ${catalog.titleHighlight ?? ""}`.trim();
     const message = buildOrderWhatsAppMessage({
       orderNumber,
       quantity: qty,
@@ -435,6 +440,7 @@ export function Order() {
       address: form.address.trim(),
       notes: form.notes.trim(),
       currency: catalog.currency,
+      productTitle: dynamicTitle,
     });
     return buildWhatsAppUrl(message);
   }, [
@@ -451,6 +457,8 @@ export function Order() {
     form.address,
     form.notes,
     catalog.currency,
+    catalog.title,
+    catalog.titleHighlight,
   ]);
 
   return (
@@ -529,7 +537,7 @@ export function Order() {
             ابدأ مغامرتك اليوم
           </h2>
           <p className="mt-1 text-sm text-cream/90 sm:text-base">
-            مغامرات نسيج في الغابة السحرية
+            {catalog.title} {catalog.titleHighlight}
           </p>
         </motion.div>
 

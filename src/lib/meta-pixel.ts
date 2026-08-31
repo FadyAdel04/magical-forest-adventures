@@ -55,7 +55,38 @@ export interface MetaPixelContactParams {
   currency?: string;
 }
 
+import type { ProductCatalog } from "./types";
+
 const DEFAULT_CURRENCY = "EGP";
+
+/**
+ * Helper to build standard Meta Pixel product params dynamically from ProductCatalog
+ */
+export function getPixelProductParams(
+  catalog?: ProductCatalog | null,
+  quantity = 1,
+  customValue?: number,
+) {
+  if (!catalog) return undefined;
+
+  const rawTitle = `${catalog.title ?? ""} ${catalog.titleHighlight ?? ""}`.trim();
+  const contentName = rawTitle || "صندوق نسيج التعليمي";
+  const category = catalog.badge || "Interactive Educational Box";
+  const id = catalog.skuCode || catalog.id || "main-product";
+  const currencyCode = catalog.currency === "جنيه" ? "EGP" : catalog.currency || DEFAULT_CURRENCY;
+  const unitPrice = Number(catalog.priceAfter) || 0;
+  const totalValue = customValue ?? unitPrice * quantity;
+
+  return {
+    content_name: contentName,
+    content_category: category,
+    content_ids: [id],
+    content_type: "product",
+    value: totalValue,
+    currency: currencyCode,
+    num_items: quantity,
+  };
+}
 
 /**
  * Low-level call to window.fbq with safety checks and development logging
@@ -95,13 +126,14 @@ export function trackPageView() {
  * Track ViewContent event (e.g. when landing page or product detail is viewed)
  */
 export function trackViewContent(params?: MetaPixelViewContentParams) {
+  if (!params) return;
   fbqTrack("ViewContent", {
-    content_name: params?.content_name ?? "مغامرات نسيج في الغابة السحرية",
-    content_category: params?.content_category ?? "Interactive Educational Box",
-    content_ids: params?.content_ids ?? ["nasseg-forest-box"],
-    content_type: params?.content_type ?? "product",
-    value: params?.value ?? 680,
-    currency: params?.currency ?? DEFAULT_CURRENCY,
+    content_name: params.content_name,
+    content_category: params.content_category,
+    content_ids: params.content_ids,
+    content_type: params.content_type ?? "product",
+    value: params.value,
+    currency: params.currency ?? DEFAULT_CURRENCY,
   });
 }
 
@@ -109,14 +141,15 @@ export function trackViewContent(params?: MetaPixelViewContentParams) {
  * Track AddToCart event (e.g. when CTA 'إطلب الآن' is clicked)
  */
 export function trackAddToCart(params?: MetaPixelAddToCartParams) {
+  if (!params) return;
   fbqTrack("AddToCart", {
-    content_name: params?.content_name ?? "مغامرات نسيج في الغابة السحرية",
-    content_category: params?.content_category ?? "Interactive Educational Box",
-    content_ids: params?.content_ids ?? ["nasseg-forest-box"],
-    content_type: params?.content_type ?? "product",
-    value: params?.value ?? 680,
-    currency: params?.currency ?? DEFAULT_CURRENCY,
-    num_items: params?.num_items ?? 1,
+    content_name: params.content_name,
+    content_category: params.content_category,
+    content_ids: params.content_ids,
+    content_type: params.content_type ?? "product",
+    value: params.value,
+    currency: params.currency ?? DEFAULT_CURRENCY,
+    num_items: params.num_items ?? 1,
   });
 }
 
@@ -124,13 +157,14 @@ export function trackAddToCart(params?: MetaPixelAddToCartParams) {
  * Track InitiateCheckout event (e.g. when order form is opened or interacted with)
  */
 export function trackInitiateCheckout(params?: MetaPixelInitiateCheckoutParams) {
+  if (!params) return;
   fbqTrack("InitiateCheckout", {
-    content_name: params?.content_name ?? "مغامرات نسيج في الغابة السحرية",
-    content_category: params?.content_category ?? "Interactive Educational Box",
-    content_ids: params?.content_ids ?? ["nasseg-forest-box"],
-    value: params?.value ?? 680,
-    currency: params?.currency ?? DEFAULT_CURRENCY,
-    num_items: params?.num_items ?? 1,
+    content_name: params.content_name,
+    content_category: params.content_category,
+    content_ids: params.content_ids,
+    value: params.value,
+    currency: params.currency ?? DEFAULT_CURRENCY,
+    num_items: params.num_items ?? 1,
   });
 }
 
@@ -141,8 +175,8 @@ export function trackPurchase(params: MetaPixelPurchaseParams) {
   fbqTrack("Purchase", {
     value: params.value,
     currency: params.currency ?? DEFAULT_CURRENCY,
-    content_name: params.content_name ?? "مغامرات نسيج في الغابة السحرية",
-    content_ids: params.content_ids ?? ["nasseg-forest-box"],
+    content_name: params.content_name,
+    content_ids: params.content_ids,
     content_type: params.content_type ?? "product",
     num_items: params.num_items ?? 1,
     order_id: params.order_id,

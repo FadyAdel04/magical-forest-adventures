@@ -32,11 +32,13 @@ export function buildOrderWhatsAppMessage(params: {
   address: string;
   notes: string;
   currency?: string;
+  productTitle?: string;
 }): string {
   const currency = params.currency ?? "جنيه";
+  const title = params.productTitle || "مغامرات نسيج في الغابة السحرية";
   const lines = [
     "مرحباً نسيج! 🌿",
-    "طلب جديد — مغامرات نسيج في الغابة السحرية",
+    `طلب جديد — ${title}`,
     "",
     `رقم الطلب: ${params.orderNumber}`,
     `الكمية: ${params.quantity}`,

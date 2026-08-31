@@ -7,9 +7,12 @@ import { ForestCharacter } from "@/components/shared/ForestCharacter";
 import { Fireflies } from "./Fireflies";
 import { SensoryFeatures } from "./SensoryFeatures";
 
-import { trackAddToCart } from "@/lib/meta-pixel";
+import { useStore } from "@/hooks/useStore";
+import { trackAddToCart, getPixelProductParams } from "@/lib/meta-pixel";
 
 export function Hero() {
+  const { catalog } = useStore();
+
   const scrollTo = (id: string) => {
     document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
   };
@@ -105,8 +108,8 @@ export function Hero() {
               transition={{ delay: 0.45, duration: 0.65 }}
               className="font-display text-[clamp(1.65rem,5.5vw,3.25rem)] font-black leading-[1.1]"
             >
-              <span className="hero-headline-glow text-cream">مغامرات الحروف في</span>
-              <span className="hero-headline-lime">   الغابة السحرية  </span>
+              <span className="hero-headline-glow text-cream">{catalog.title || "مغامرات الحروف في"}</span>
+              <span className="hero-headline-lime"> {catalog.titleHighlight || "الغابة السحرية"} </span>
             </motion.h1>
 
             <motion.div
@@ -127,7 +130,8 @@ export function Hero() {
               <button
                 type="button"
                 onClick={() => {
-                  trackAddToCart();
+                  const params = getPixelProductParams(catalog);
+                  if (params) trackAddToCart(params);
                   scrollTo("order");
                 }}
                 className="relative inline-flex items-center gap-1.5 rounded-full border border-white/30 bg-gradient-to-b from-white/20 to-white/5 px-4 py-2 text-xs font-semibold text-cream shadow-[0_5px_0_rgba(0,0,0,0.2)] backdrop-blur-sm transition-all duration-150 active:translate-y-[2px] active:shadow-[0_2px_0_rgba(0,0,0,0.2)] hover:bg-white/20 sm:gap-2 sm:px-6 sm:py-2.5 sm:text-sm"
