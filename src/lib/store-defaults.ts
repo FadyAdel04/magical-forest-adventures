@@ -1,6 +1,6 @@
 import { GOVERNORATES } from "./governorates";
 import { resolveLegacyImage, type ImageAssetKey } from "./imageAssets";
-import type { AppData, OrderRecord, ProductCatalog, ShippingSettings, CartItem } from "./types";
+import type { AppData, OrderRecord, ProductCatalog, ShippingSettings, CartItem, Cart } from "./types";
 
 function uid() {
   return crypto.randomUUID();
@@ -170,10 +170,10 @@ function normalizeData(parsed: Record<string, unknown>): AppData {
     ? {
         items: Array.isArray((parsed.cart as any).items)
           ? ((parsed.cart as any).items as CartItem[]).map((item: Record<string, unknown>) => ({
-              id: item.id ?? crypto.randomUUID(),
-              productId: item.productId ?? "",
-              title: item.title ?? "",
-              skuCode: item.skuCode ?? "",
+              id: (item.id as string) ?? crypto.randomUUID(),
+              productId: (item.productId as string) ?? "",
+              title: (item.title as string) ?? "",
+              skuCode: (item.skuCode as string) ?? "",
               quantity: Number(item.quantity ?? 0),
               unitPrice: Number(item.unitPrice ?? 0),
               imageUrl: item.imageUrl as string | undefined,

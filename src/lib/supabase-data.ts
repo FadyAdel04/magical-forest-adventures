@@ -8,7 +8,7 @@ import {
   shippingRowToSettings,
 } from "./supabase-mappers";
 import type { AppData, OrderRecord, OrderStatus, ProductCatalog, ShippingSettings } from "./types";
-import { createDefaultCatalog, createDefaultShipping } from "./store-defaults";
+import { createDefaultCatalog, createDefaultShipping, createDefaultCart } from "./store-defaults";
 
 const PRODUCT_ID = "main-product";
 const SHIPPING_ID = "default";
@@ -41,7 +41,7 @@ export async function fetchAppDataFromSupabase(): Promise<AppData> {
 
   const orders = (ordersRes.data ?? []).map(orderRowToRecord);
 
-  return { catalog, orders, shipping };
+  return { catalog, orders, shipping, cart: createDefaultCart() };
 }
 
 export async function upsertCatalogToSupabase(catalog: ProductCatalog): Promise<void> {

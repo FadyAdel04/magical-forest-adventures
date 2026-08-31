@@ -121,14 +121,16 @@ async function pullFromSupabase() {
     if (local && local.orders.length > 0 && !hasMigratedOrders()) {
       await seedAppDataToSupabase(local);
       markOrdersMigrated();
-      cache = await fetchAppDataFromSupabase();
+      const freshRemote = await fetchAppDataFromSupabase();
+      cache = { ...freshRemote, cart: cache.cart };
       saveLocalStorageBackup(cache);
       return;
     }
   }
 
   // Supabase is the single source of truth — always use remote data.
-  cache = remote;
+  // Except for the cart, which is local.
+  cache = { ...remote, cart: cache.cart };
   saveLocalStorageBackup(cache);
 }
 
@@ -214,7 +216,7 @@ export async function refreshStore(options?: { silent?: boolean }): Promise<void
   try {
     // Supabase is always authoritative — no local-wins logic here.
     const remote = await fetchAppDataFromSupabase();
-    cache = remote;
+    cache = { ...remote, cart: cache.cart };
     saveLocalStorageBackup(cache);
     error = null;
   } catch (e) {
