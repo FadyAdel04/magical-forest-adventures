@@ -41,6 +41,11 @@ let error: string | null = null;
 let hydratePromise: Promise<void> | null = null;
 let unsubscribeRealtime: (() => void) | null = null;
 
+// Debounce timer for realtime refreshes — prevents race conditions where
+// the realtime event fires before Supabase has finished propagating the change.
+let realtimeDebounceTimer: ReturnType<typeof setTimeout> | null = null;
+const REALTIME_DEBOUNCE_MS = 600;
+
 const listeners = new Set<() => void>();
 
 function notify() {
@@ -105,24 +110,45 @@ export function getStoreSnapshot(): StoreSnapshot {
 
 async function pullFromSupabase() {
   const remote = await fetchAppDataFromSupabase();
-  const local = loadLocalStorageData();
 
-  if (local && local.orders.length > 0 && remote.orders.length === 0) {
-    await seedAppDataToSupabase(local);
-    cache = await fetchAppDataFromSupabase();
-  } else {
-    const remoteTime = new Date(remote.catalog.updatedAt).getTime();
-    const localTime = local ? new Date(local.catalog.updatedAt).getTime() : 0;
-
-    if (!isNaN(localTime) && !isNaN(remoteTime) && localTime > remoteTime && local) {
-      await upsertCatalogToSupabase(local.catalog);
-      cache = { ...remote, catalog: local.catalog };
-    } else {
-      cache = remote;
+  // One-time migration: if Supabase has ZERO orders AND localStorage has orders,
+  // seed them once only. A localStorage flag prevents re-seeding on subsequent
+  // loads — which would restore previously deleted orders back into Supabase.
+  if (remote.orders.length === 0) {
+    const local = loadLocalStorageData();
+    if (local && local.orders.length > 0 && !hasMigratedOrders()) {
+      await seedAppDataToSupabase(local);
+      markOrdersMigrated();
+      cache = await fetchAppDataFromSupabase();
+      saveLocalStorageBackup(cache);
+      return;
     }
   }
+
+  // Supabase is the single source of truth — always use remote data.
+  cache = remote;
   saveLocalStorageBackup(cache);
 }
+
+/** localStorage flag so we only attempt the one-time migration once ever. */
+const MIGRATION_FLAG_KEY = "naseeg_orders_migrated_v1";
+
+function hasMigratedOrders(): boolean {
+  try {
+    return localStorage.getItem(MIGRATION_FLAG_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+
+function markOrdersMigrated(): void {
+  try {
+    localStorage.setItem(MIGRATION_FLAG_KEY, "1");
+  } catch {
+    /* quota exceeded */
+  }
+}
+
 
 async function pullFromLocal() {
   cache = loadLocalStorageData() ?? createDefaultData();
@@ -140,9 +166,16 @@ export async function hydrateStore(): Promise<void> {
     try {
       if (isSupabaseConfigured) {
         await pullFromSupabase();
+        // Set up realtime subscription with debouncing to prevent race conditions.
+        // Supabase Realtime fires immediately, but the DB change may not be
+        // readable yet via REST. The debounce waits for propagation to complete.
         unsubscribeRealtime?.();
         unsubscribeRealtime = subscribeToSupabaseChanges(() => {
-          void refreshStore({ silent: true });
+          if (realtimeDebounceTimer) clearTimeout(realtimeDebounceTimer);
+          realtimeDebounceTimer = setTimeout(() => {
+            realtimeDebounceTimer = null;
+            void refreshStore({ silent: true });
+          }, REALTIME_DEBOUNCE_MS);
         });
       } else {
         await pullFromLocal();
@@ -152,6 +185,7 @@ export async function hydrateStore(): Promise<void> {
       const message = e instanceof Error ? e.message : "تعذّر تحميل البيانات";
       error = message;
       try {
+        // Fallback to localStorage read-only — never push back to Supabase on error.
         await pullFromLocal();
         isReady = true;
       } catch {
@@ -160,6 +194,8 @@ export async function hydrateStore(): Promise<void> {
       }
     } finally {
       isLoading = false;
+      // Reset the promise so the next page load/re-mount triggers a fresh fetch.
+      hydratePromise = null;
       notify();
     }
   })();
@@ -174,20 +210,9 @@ export async function refreshStore(options?: { silent?: boolean }): Promise<void
     notify();
   }
   try {
+    // Supabase is always authoritative — no local-wins logic here.
     const remote = await fetchAppDataFromSupabase();
-
-    const remoteTime = new Date(remote.catalog.updatedAt).getTime();
-    const localTime = new Date(cache.catalog.updatedAt).getTime();
-
-    const catalogToUse =
-      isNaN(remoteTime) || isNaN(localTime) || remoteTime >= localTime
-        ? remote.catalog
-        : cache.catalog;
-
-    cache = {
-      ...remote,
-      catalog: catalogToUse,
-    };
+    cache = remote;
     saveLocalStorageBackup(cache);
     error = null;
   } catch (e) {
@@ -210,21 +235,25 @@ export async function replaceCatalog(catalog: ProductCatalog): Promise<void> {
     id: catalog.id || "main-product",
     updatedAt: now(),
   };
-  cache = { ...cache, catalog: updated };
-  persistLocal();
 
   if (isSupabaseConfigured) {
+    // Write to Supabase FIRST — then update local cache to match confirmed write.
     await upsertCatalogToSupabase(updated);
   }
+  cache = { ...cache, catalog: updated };
+  persistLocal();
 }
+
 
 export async function replaceShipping(shipping: ShippingSettings): Promise<void> {
   if (isSupabaseConfigured) {
+    // Write to Supabase FIRST — then update local cache to match confirmed write.
     await upsertShippingToSupabase(shipping);
   }
   cache = { ...cache, shipping };
   persistLocal();
 }
+
 
 export type CreateOrderInput = {
   customerName: string;

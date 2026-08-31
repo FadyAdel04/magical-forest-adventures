@@ -31,17 +31,13 @@ export async function fetchAppDataFromSupabase(): Promise<AppData> {
   if (shippingRes.error) throw shippingRes.error;
   if (ordersRes.error) throw ordersRes.error;
 
-  let catalog = productRes.data ? productRowToCatalog(productRes.data) : createDefaultCatalog();
-  let shipping = shippingRes.data
+  // Use in-memory defaults ONLY — never auto-seed defaults to Supabase.
+  // Auto-seeding caused real data to be overwritten when Supabase returned
+  // a transient empty result (network glitch, cold start, etc.).
+  const catalog = productRes.data ? productRowToCatalog(productRes.data) : createDefaultCatalog();
+  const shipping = shippingRes.data
     ? shippingRowToSettings(shippingRes.data)
     : createDefaultShipping();
-
-  if (!productRes.data) {
-    await upsertCatalogToSupabase(catalog);
-  }
-  if (!shippingRes.data) {
-    await upsertShippingToSupabase(shipping);
-  }
 
   const orders = (ordersRes.data ?? []).map(orderRowToRecord);
 
