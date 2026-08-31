@@ -19,12 +19,11 @@ interface CartDrawerProps {
 }
 
 export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
-  const { catalog, cart, removeFromCart, updateCartQuantity, clearCart } = useStore();
+  const { catalog, cart, updateCartQuantity, clearCart } = useStore();
 
   if (!catalog.active) return null;
 
-  const cartItem = cart?.items?.find((item) => item.productId === catalog.id);
-  const quantity = cartItem?.quantity || 0;
+
 
   const handleOrderNow = () => {
     // Scroll to order section
