@@ -154,10 +154,7 @@ export async function seedAppDataToSupabase(data: AppData): Promise<void> {
   if (!existingShipping) {
     await upsertShippingToSupabase(data.shipping);
   }
-
-  for (const order of [...data.orders].reverse()) {
-    await insertOrderToSupabase(order);
-  }
+  // Orders must NEVER be automatically seeded to Supabase.
 }
 
 export function subscribeToSupabaseChanges(onChange: () => void): () => void {

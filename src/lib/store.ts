@@ -5,7 +5,6 @@ import {
   fetchAppDataFromSupabase,
   insertOrderToSupabase,
   nextOrderNumberFromSupabase,
-  seedAppDataToSupabase,
   subscribeToSupabaseChanges,
   updateOrderStatusInSupabase,
   upsertCatalogToSupabase,
@@ -113,44 +112,11 @@ export function getStoreSnapshot(): StoreSnapshot {
 async function pullFromSupabase() {
   const remote = await fetchAppDataFromSupabase();
 
-  // One-time migration: if Supabase has ZERO orders AND localStorage has orders,
-  // seed them once only. A localStorage flag prevents re-seeding on subsequent
-  // loads — which would restore previously deleted orders back into Supabase.
-  if (remote.orders.length === 0) {
-    const local = loadLocalStorageData();
-    if (local && local.orders.length > 0 && !hasMigratedOrders()) {
-      await seedAppDataToSupabase(local);
-      markOrdersMigrated();
-      const freshRemote = await fetchAppDataFromSupabase();
-      cache = { ...freshRemote, cart: cache.cart };
-      saveLocalStorageBackup(cache);
-      return;
-    }
-  }
-
   // Supabase is the single source of truth — always use remote data.
   // Except for the cart, which is local.
+  // Never re-seed or restore deleted orders from localStorage.
   cache = { ...remote, cart: cache.cart };
   saveLocalStorageBackup(cache);
-}
-
-/** localStorage flag so we only attempt the one-time migration once ever. */
-const MIGRATION_FLAG_KEY = "naseeg_orders_migrated_v1";
-
-function hasMigratedOrders(): boolean {
-  try {
-    return localStorage.getItem(MIGRATION_FLAG_KEY) === "1";
-  } catch {
-    return false;
-  }
-}
-
-function markOrdersMigrated(): void {
-  try {
-    localStorage.setItem(MIGRATION_FLAG_KEY, "1");
-  } catch {
-    /* quota exceeded */
-  }
 }
 
 

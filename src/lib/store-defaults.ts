@@ -185,16 +185,18 @@ function normalizeData(parsed: Record<string, unknown>): AppData {
   return { catalog, orders, shipping, cart };
 }
 
-/** Read legacy localStorage backup (used for one-time migration to Supabase). */
+/** Read localStorage backup for catalog, shipping, and cart. Orders are never persisted to localStorage. */
 export function loadLocalStorageData(): AppData | null {
   try {
     const rawV2 = localStorage.getItem(STORAGE_KEY);
     if (rawV2) {
-      return normalizeData(JSON.parse(rawV2) as Record<string, unknown>);
+      const data = normalizeData(JSON.parse(rawV2) as Record<string, unknown>);
+      return { ...data, orders: [] };
     }
     const rawV1 = localStorage.getItem(LEGACY_KEY);
     if (rawV1) {
-      return normalizeData(JSON.parse(rawV1) as Record<string, unknown>);
+      const data = normalizeData(JSON.parse(rawV1) as Record<string, unknown>);
+      return { ...data, orders: [] };
     }
     return null;
   } catch {
@@ -204,7 +206,16 @@ export function loadLocalStorageData(): AppData | null {
 
 export function saveLocalStorageBackup(data: AppData) {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    // Only persist catalog, shipping, and cart locally. Orders belong strictly in Supabase.
+    const safeData: AppData = {
+      catalog: data.catalog,
+      shipping: data.shipping,
+      cart: data.cart,
+      orders: [],
+    };
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(safeData));
+    localStorage.removeItem("naseeg_orders_migrated_v1");
+    localStorage.removeItem(LEGACY_KEY);
   } catch {
     /* quota exceeded — ignore */
   }
